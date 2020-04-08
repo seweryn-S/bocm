@@ -22,14 +22,6 @@ partition:
     fstype: ""
     mnt: ""
     mntopt: ""
-    size: 10
-  -
-    number: 3
-    name: USR
-    type: 8e00
-    fstype: ""
-    mnt: ""
-    mntopt: ""
     size: 0
 
 volume:

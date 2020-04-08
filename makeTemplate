@@ -40,13 +40,13 @@ docker run -d --rm --name ${TEMPLATE} ${RUNOPT} ${IMG} /bin/sleep 1000 > /dev/nu
 && KERNEL=$(docker exec ${TEMPLATE} readlink -f /vmlinuz) \
 && INITRD=$(docker exec ${TEMPLATE} readlink -f /initrd.img) \
 && printf "Aktualizuje initramfs... "; docker exec ${TEMPLATE} update-initramfs -c -k all > /dev/null; printf "OK\n" \
-&& docker cp ${TEMPLATE}:${KERNEL} ../vmlinuz \
+&& docker cp ${TEMPLATE}:${KERNEL} ${IMGSRC}/../vmlinuz \
 && chmod go+r ../vmlinuz \
-&& docker cp ${TEMPLATE}:${INITRD} ../initrd.img \
+&& docker cp ${TEMPLATE}:${INITRD} ${IMGSRC}/../initrd.img \
 && docker stop -t 0 ${TEMPLATE} > /dev/null \
 && docker run -d --name ${TEMPLATE} ${IMG} /bin/sleep 1000 > /dev/null \
 && docker stop -t 0 ${TEMPLATE} > /dev/null \
-&& printf "Eksportuje kontener do archiwum tgz... "; docker export ${TEMPLATE}|pigz > ../${TEMPLATE}.tgz; printf "OK\n" \
+&& printf "Eksportuje kontener do archiwum tgz... "; docker export ${TEMPLATE}|pigz > ${IMGSRC}/../${TEMPLATE}.tgz; printf "OK\n" \
 && docker rm ${TEMPLATE} > /dev/null
 
 

@@ -1,0 +1,52 @@
+#!/bin/bash
+source global
+
+if [ "$#" == 0 ]; then
+  printf "Poprawne wywołanie: $0 nazwa_katalogu_zawierajacego_obraz_kontenerai\n"
+  exit ${PARAMERROR}
+fi
+
+IMGSRC=$1
+
+if ! [ -d ${IMGSRC} ]; then
+  printf "Katalog z obrazem kontenera nie istnieje!\n"
+  exit ${DIRERROR}
+fi
+
+read -p "Czy budowac obraz z katalogu ${IMGSRC}? (t/n): " ANS
+if [ ${ANS} != 't' ] && [ ${ANS} != 'T' ]; then
+  exit 0
+fi
+
+printf "Budowanie kontenera..."
+IMG=$(${IMGSRC}/${BUILDSCR})
+if [ ${IMG} = 'Error' ]; then
+  printf "Budowanie kontenera zakonczone bledem!\n"
+  exit ${BUILDERROR}
+fi
+printf " ${IMG} OK\n"
+
+TEMPLATE=${IMG%:*}
+#TEMPLATE=${IMG}
+
+# Jesli nie istnieje kontener
+if docker ps -a|grep -q ${TEMPLATE}; then 
+  printf "Błąd! Kontener o nazwie ${TEMPLATE} isnieje. Zakończ jego działanie i powtórz wywołanie.\n"
+fi
+
+docker run -d --rm --name ${TEMPLATE} ${RUNOPT} ${IMG} /bin/sleep 1000 > /dev/null \
+&& for F in ${IMGSRC}/bocm/*; do docker cp $(readlink -f ${F}) ${TEMPLATE}:/etc/bocm/; done \
+&& docker exec ${TEMPLATE} chmod 600 /etc/bocm/boipxe_rsa \
+&& KERNEL=$(docker exec ${TEMPLATE} readlink -f /vmlinuz) \
+&& INITRD=$(docker exec ${TEMPLATE} readlink -f /initrd.img) \
+&& printf "Aktualizuje initramfs... "; docker exec ${TEMPLATE} update-initramfs -c -k all > /dev/null; printf "OK\n" \
+&& docker cp ${TEMPLATE}:${KERNEL} ../vmlinuz \
+&& chmod go+r ../vmlinuz \
+&& docker cp ${TEMPLATE}:${INITRD} ../initrd.img \
+&& docker stop -t 0 ${TEMPLATE} > /dev/null \
+&& docker run -d --name ${TEMPLATE} ${IMG} /bin/sleep 1000 > /dev/null \
+&& docker stop -t 0 ${TEMPLATE} > /dev/null \
+&& printf "Eksportuje kontener do archiwum tgz... "; docker export ${TEMPLATE}|pigz > ../${TEMPLATE}.tgz; printf "OK\n" \
+&& docker rm ${TEMPLATE} > /dev/null
+
+

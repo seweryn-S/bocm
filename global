@@ -1,0 +1,16 @@
+#TEMPLATE=git@github.com:bockpl/ubuntu18.04src.git
+#TEMPLATE=bockpl/ubuntu18.04src:latest
+#TEMPLATE=ubuntu18.04:latest
+IMG=${TEMPLATE/:*}
+
+BUILDSCR='buildImg'
+
+# Kody bledow
+BUILDERROR=1
+DIRERROR=2
+PARAMERROR=3
+
+#TEMPLATE=$(basename $(dirname $(pwd)))
+GZIP=$(which pigz || which gzip)
+
+RUNOPT="-v $(pwd)/etc/bocm:/etc/bocm -v $(pwd)/etc/initramfs-tools:/etc/initramfs-tools"

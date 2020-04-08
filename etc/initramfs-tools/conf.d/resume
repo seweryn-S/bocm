@@ -1,0 +1,2 @@
+# Disable resume (this system has no swap)
+RESUME=none

@@ -27,26 +27,21 @@ fi
 printf " ${IMG} OK\n"
 
 TEMPLATE=${IMG%:*}
-#TEMPLATE=${IMG}
+OUTDIR=$(dirname ${IMGSRC})
 
-# Jesli nie istnieje kontener
-if docker ps -a|grep -q ${TEMPLATE}; then 
-  printf "Błąd! Kontener o nazwie ${TEMPLATE} isnieje. Zakończ jego działanie i powtórz wywołanie.\n"
-fi
-
-docker run -d --rm --name ${TEMPLATE} ${RUNOPT} ${IMG} /bin/sleep 1000 > /dev/null \
-&& for F in ${IMGSRC}/bocm/*; do docker cp $(readlink -f ${F}) ${TEMPLATE}:/etc/bocm/; done \
-&& docker exec ${TEMPLATE} chmod 600 /etc/bocm/boipxe_rsa \
-&& KERNEL=$(docker exec ${TEMPLATE} readlink -f /vmlinuz) \
-&& INITRD=$(docker exec ${TEMPLATE} readlink -f /initrd.img) \
-&& printf "Aktualizuje initramfs... "; docker exec ${TEMPLATE} update-initramfs -c -k all > /dev/null; printf "OK\n" \
-&& docker cp ${TEMPLATE}:${KERNEL} ${IMGSRC}/../vmlinuz \
-&& chmod go+r ../vmlinuz \
-&& docker cp ${TEMPLATE}:${INITRD} ${IMGSRC}/../initrd.img \
-&& docker stop -t 0 ${TEMPLATE} > /dev/null \
-&& docker run -d --name ${TEMPLATE} ${IMG} /bin/sleep 1000 > /dev/null \
-&& docker stop -t 0 ${TEMPLATE} > /dev/null \
-&& printf "Eksportuje kontener do archiwum tgz... "; docker export ${TEMPLATE}|pigz > ${IMGSRC}/../${TEMPLATE}.tgz; printf "OK\n" \
-&& docker rm ${TEMPLATE} > /dev/null
+CONTAINER=$(docker run -d --rm ${RUNOPT} ${IMG} /bin/sleep 1000) \
+&& for F in ${IMGSRC}/bocm/*; do docker cp $(readlink -f ${F}) ${CONTAINER}:/etc/bocm/; done \
+&& docker exec ${CONTAINER} chmod 600 /etc/bocm/boipxe_rsa \
+&& KERNEL=$(docker exec ${CONTAINER} readlink -f /vmlinuz) \
+&& INITRD=$(docker exec ${CONTAINER} readlink -f /initrd.img) \
+&& printf "Aktualizuje initramfs... "; docker exec ${CONTAINER} update-initramfs -c -k all > /dev/null; printf "OK\n" \
+&& docker cp ${CONTAINER}:${KERNEL} ${OUTDIR}/vmlinuz \
+&& chmod go+r ${OUTDIR}/vmlinuz \
+&& docker cp ${CONTAINER}:${INITRD} ${OUTDIR}/initrd.img \
+&& docker stop -t 0 ${CONTAINER} > /dev/null \
+&& CONTAINER=$(docker run -d ${IMG} /bin/sleep 1000) \
+&& docker stop -t 0 ${CONTAINER} > /dev/null \
+&& printf "Eksportuje kontener do archiwum tgz... "; docker export ${CONTAINER}|pigz > ${OUTDIR}/${TEMPLATE}.tgz; printf "OK\n" \
+&& docker rm ${CONTAINER} > /dev/null
 
 

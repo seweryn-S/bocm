@@ -31,7 +31,6 @@ OUTDIR=$(dirname ${IMGSRC})
 
 CONTAINER=$(docker run -d --rm ${RUNOPT} ${IMG} /bin/sleep 1000) \
 && for F in ${IMGSRC}/bocm/*; do docker cp $(readlink -f ${F}) ${CONTAINER}:/etc/bocm/; done \
-&& docker exec ${CONTAINER} chmod 600 /etc/bocm/boipxe_rsa \
 && KERNEL=$(docker exec ${CONTAINER} readlink -f /vmlinuz) \
 && INITRD=$(docker exec ${CONTAINER} readlink -f /initrd.img) \
 && printf "Aktualizuje initramfs... "; docker exec ${CONTAINER} update-initramfs -c -k all > /dev/null; printf "OK\n" \

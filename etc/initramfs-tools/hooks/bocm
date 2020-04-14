@@ -63,6 +63,8 @@ copy_exec /usr/bin/ssh /usr/bin/ssh
 
 # Kopiowanie klucza dostepowego do boipxe
 copy_file BOCM_key /etc/bocm/boipxe_rsa
+# Zmiana uprawnien, git nie przenosi uprawnien klucz prywatny musi miec konkretne
+chmod 600 ${DESTDIR}/etc/bocm/boipxe_rsa
 copy_file BOCM_key_pub /etc/bocm/boipxe_rsa.pub
 
 # Na potrzeby formatowania dysku
@@ -75,5 +77,10 @@ copy_file BOCM_rc.local /etc/bocm/rc.local
 
 # Na potrzeby klienta ssh
 copy_file SSH_PASSWD /etc/passwd /etc/passwd
+
+# Dodanie shella fish
+copy_exec /usr/bin/fish /usr/bin/fish
+mkdir -p ${DESTDIR}/usr/share/fish/
+cp -ar /usr/share/fish/* ${DESTDIR}/usr/share/fish/
 
 exit 0

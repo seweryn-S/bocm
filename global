@@ -13,4 +13,5 @@ PARAMERROR=3
 #TEMPLATE=$(basename $(dirname $(pwd)))
 GZIP=$(which pigz || which gzip)
 
-RUNOPT="-v $(pwd)/etc/bocm:/etc/bocm -v $(pwd)/etc/initramfs-tools:/etc/initramfs-tools"
+DESTDIR=/opt
+RUNOPT="-v $(pwd)/etc/bocm:${DESTDIR}/etc/bocm -v $(pwd)/etc/initramfs-tools:${DESTDIR}/etc/initramfs-tools"

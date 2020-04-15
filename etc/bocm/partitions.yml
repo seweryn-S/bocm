@@ -1,5 +1,3 @@
-#NOWY
-
 # Typ partycji to numer kodowy zgodny z typami partycji wyswietlanymi przez polecenie sgdisk -L
 # Obsługiwane typy systemów plików: 
 #   ef00 - EFI System

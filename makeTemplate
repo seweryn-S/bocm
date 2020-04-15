@@ -33,12 +33,13 @@ CONTAINER=$(docker run -d --rm ${RUNOPT} ${IMG} /bin/sleep 1000) \
 && for F in ${IMGSRC}/bocm/*; do docker cp $(readlink -f ${F}) ${CONTAINER}:/etc/bocm/; done \
 && KERNEL=$(docker exec ${CONTAINER} readlink -f /vmlinuz) \
 && INITRD=$(docker exec ${CONTAINER} readlink -f /initrd.img) \
-&& printf "Aktualizuje initramfs... "; docker exec ${CONTAINER} update-initramfs -c -k all > /dev/null; printf "OK\n" \
+&& printf "Aktualizuje initramfs BOCM... "; docker exec ${CONTAINER} update-initramfs -c -k all > /dev/null; printf "OK\n" \
 && docker cp ${CONTAINER}:${KERNEL} ${OUTDIR}/vmlinuz \
 && chmod go+r ${OUTDIR}/vmlinuz \
 && docker cp ${CONTAINER}:${INITRD} ${OUTDIR}/initrd.img \
 && docker stop -t 0 ${CONTAINER} > /dev/null \
 && CONTAINER=$(docker run -d ${IMG} /bin/sleep 1000) \
+&& printf "Aktualizuje initramfs dyskowy... "; docker exec ${CONTAINER} update-initramfs -c -k all > /dev/null && printf "OK\n" || printf "Fail: $?\n" \
 && docker stop -t 0 ${CONTAINER} > /dev/null \
 && printf "Eksportuje kontener do archiwum tgz... "; docker export ${CONTAINER}|pigz > ${OUTDIR}/${TEMPLATE}.tgz; printf "OK\n" \
 && docker rm ${CONTAINER} > /dev/null

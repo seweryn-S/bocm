@@ -611,11 +611,12 @@ bocm_bottom() {
   mount -o bind /sys ${rootmnt}/sys
   change_kernelparams ${rootmnt}/etc/default/grub
   chroot ${rootmnt} /bin/bash -c " \
-      sed -i -e 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf; \
-      update-grub; \
-      grub-install --efi-directory=/boot/efi; \
-      sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf; \
-      exit"
+      sed -i -e 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
+      && update-grub \
+      && grub-install --efi-directory=/boot/efi \
+      && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
+      && update-initramfs -c -k all \
+      && exit"
   if [ -f ${rootmnt}/etc/fstab.org ]; then
     mv ${rootmnt}/etc/fstab.org ${rootmnt}/etc/fstab
   fi

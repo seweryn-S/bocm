@@ -513,6 +513,10 @@ bocm_top() {
     return 1
   )
 
+  printf "\n************************\n"
+  printf " BOCM vesrion $(cat /etc/bocm/VERSION)\n"
+  printf "************************\n\n"
+
   # Jezeli nie ma synchronizacji nic nie rob
   if [ "x${IPXEHTTP}" = 'x' ]; then
     return 1 

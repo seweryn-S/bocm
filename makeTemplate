@@ -33,7 +33,10 @@ CONTAINER=$(docker run -d --rm ${RUNOPT} ${IMG} /bin/sleep 1000) \
 && docker exec ${CONTAINER} /bin/bash -c "rm -rf /etc/bocm; rm -rf /etc/initramfs-tools" \
 && docker exec ${CONTAINER} /bin/bash -c "cp -ar ${DESTDIR}/etc/* /etc/" \
 && printf "Nadpisywanie konfiguracji dyskowej z obrazu systemu... " \
-&& for F in ${IMGSRC}/bocm/*; do docker cp $(readlink -f ${F}) ${CONTAINER}:/etc/bocm/; done;  printf "OK\n" \
+&& for F in ${IMGSRC}/bocm/*; do docker cp $(readlink -f ${F}) ${CONTAINER}:/etc/bocm/; done \
+&& docker cp ${IMGSRC}/VERSION ${CONTAINER}:/etc/bocm/; printf "OK\n" \
+&& BRANCH=$(git status|grep "On branch"|awk '{ print $3}') \
+&& docker exec ${CONTAINER} bash -c "echo \" - ${BRANCH}\" >> /etc/bocm/VERSION" \
 && KERNEL=$(docker exec ${CONTAINER} readlink -f /vmlinuz) \
 && INITRD=$(docker exec ${CONTAINER} readlink -f /initrd.img) \
 && printf "Aktualizuje initramfs BOCM... "; docker exec ${CONTAINER} update-initramfs -c -k all > /dev/null && printf "OK\n" || printf "Error code: $?\n" \

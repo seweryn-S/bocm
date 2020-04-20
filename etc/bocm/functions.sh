@@ -13,7 +13,6 @@ Lista funkcji:
   override_initrd_scripts
   bocm_top (in initramfs only)
   bocm_bottom (in initramfs only)
-  make_network_config_file (in initramfs only)
 EOF
   exit
 fi
@@ -645,17 +644,4 @@ bocm_bottom() {
 
   umountAll ${rootmnt} ${_PARTITIONS_FILE}
   mount -o remount,ro ${rootmnt} || panic "could not remount ro ${rootmnt}"
-}
-
-make_network_config_file() {
-  [ "x$init" = "x" ] && (
-    echo "Not initramfs!"
-    return
-  )
-  # Local network configuration
-  local OLDDIR=""
-  OLDDIR=$(pwd)
-  cd "${rootmnt}/etc/network/"
-  /bin/ln -sf "interfaces.${BOOT}" interfaces || panic "Error making network configuration file!"
-  cd "$OLDDIR"
 }

@@ -647,15 +647,9 @@ bocm_bottom() {
   cd /
   log_end_msg
 
-  # Umieszczenie pliku rc.local na pierwszy start maszyny
-  log_begin_msg "Put first boot rc.local"
-  printf "\n"
-  if [ -f ${rootmnt}/etc/rc.local ]; then
-    mv ${rootmnt}/etc/rc.local ${rootmnt}/etc/rc.local.user
-  fi
-  cp ${BOCMDIR}/rc.local ${rootmnt}/etc/rc.local
-  log_end_msg
-  # Umieszczenie pliku resolv.conf
+  
+
+# Umieszczenie pliku resolv.conf
   log_begin_msg "Put file resolv.conf"
   ln -sf /run/systemd/resolve/stub-resolv.conf ${rootmnt}/etc/resolv.conf
   log_end_msg

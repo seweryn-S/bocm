@@ -34,7 +34,7 @@ partition:
 volume:
   -
     part: 2
-    name: SWAP
+    name: lvswap
     dev: mapper/vgroot-lvswap
     fstype: swap
     size: 1G

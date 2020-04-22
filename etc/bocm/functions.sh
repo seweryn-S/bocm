@@ -242,7 +242,7 @@ makeVolumes() {
         _vgname=${volume__dev[$v]%%-*}
         _vgname=${_vgname##mapper/}
 
-        if [ "x${volume__name[$v]}" == "xSWAP" ]; then
+        if [ "x${volume__fstype[$v]}" == "xswap" ]; then
           if [ ${volume__size[$v]} == "0" ]; then
             volume__size[$v]=$(echo "$(_getMemorySize) $(_getDiskCount)" | awk '{printf("%.2f\n", 2*$1/$2)}')
           fi

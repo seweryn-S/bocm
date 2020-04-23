@@ -620,8 +620,8 @@ bocm_bottom() {
   /usr/bin/ssh -o BatchMode=yes -i ${BOCMDIR}/boipxe_rsa root@${IPXEHTTP%%\/*} "tar -zcf - --exclude=boot.ipxe --exclude=.git --exclude=initrd.conf -C ${CONFIMAGE}/ ." | tar zxf - -C ${rootmnt} || panic "Configuration ${CONFIMAGE} download erro!"
   log_end_msg
 
-  log_begin_msg "Installing bootloader"
-  printf "\n"
+  log_begin_msg "Installing bootloader, rebuild initramfs"
+  
   # Zabezpieczenie istniejącego fstab przed nadpisaniem
   if [ -f ${rootmnt}/etc/fstab ]; then
     mv ${rootmnt}/etc/fstab ${rootmnt}/etc/fstab.org
@@ -633,10 +633,10 @@ bocm_bottom() {
   change_kernelparams ${rootmnt}/etc/default/grub
   chroot ${rootmnt} /bin/bash -c " \
       sed -i -e 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
-      && update-grub \
-      && grub-install --efi-directory=/boot/efi \
+      && update-grub &> /dev/null \
+      && grub-install --efi-directory=/boot/efi &> /dev/null \
+      && update-initramfs -c -k all &> /dev/null &> /dev/null \
       && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
-      && update-initramfs -c -k all \
       && exit"
   if [ -f ${rootmnt}/etc/fstab.org ]; then
     mv ${rootmnt}/etc/fstab.org ${rootmnt}/etc/fstab

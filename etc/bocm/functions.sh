@@ -152,7 +152,10 @@ makeStdPartition() {
     create_variables "${_partfile}"
 
     for ((p = 0; p < ${#partition__number[@]}; p++)); do
-      _result=$(_run "${_SGDISK} -n ${partition__number[$p]}::+${partition__size[$p]} ${_devdisk} -t ${partition__number[$p]}:${partition__type[$p]} -c ${partition__number[$p]}:${partition__name[$p]}") || break      
+       # Patch dla dyskow nvme, gdzie numerowanie partycji zaczyna sie litera p
+       local part_number=${partition__number[$p]#p}
+
+      _result=$(_run "${_SGDISK} -n ${part_number}::+${partition__size[$p]} ${_devdisk} -t ${partition__number[$p]}:${partition__type[$p]} -c ${partition__number[$p]}:${partition__name[$p]}") || break      
       
       case ${partition__fstype[$p]} in
         "vfat") _result=$(_run "/sbin/mkfs.vfat -F 32 ${_devdisk}${partition__number[$p]}") ;;

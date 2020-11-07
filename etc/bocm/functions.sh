@@ -543,8 +543,8 @@ bocm_top() {
   fi
 
   # Zabezpieczenie na wypadek opoznionego pojawienia sie dysku w systemie, wystepuje czesto na rzeczywistym sprzecie
-  while [ "x$(ls /dev/sda 2>/dev/null)" != "x/dev/sda" ]; do
-    printf "No /dev/sda disk, waiting...\n"
+  while [ "x$(ls ${DISKDEV} 2>/dev/null)" != "x${DISKDEV}" ]; do
+    printf "No ${DISKDEV} disk, waiting...\n"
     sleep 1
   done
 

@@ -77,9 +77,16 @@ _getMemorySize() {
 }
 
 # Funkcja zwraca ilosc dostepnych do zagospodarowania dyskow
+# posluguje sie wyrazeniem regularnym DISKFILTER
+# odrzuca urzadzenia srX czyli cdromy
 _getDiskCount() {
   local RESULT="0"
-  RESULT=$(find /dev -name "sd?" | wc -l)
+  RESULT=$(for D in $(find /dev/disk/by-path \
+  -regex "${DISKFILTER}"); do \
+  if readlink $D|grep -q -v sr; then \
+    echo $D; \
+  fi; \
+  done|wc -l)
 
   echo -e "$RESULT"
 }

@@ -199,7 +199,6 @@ makeVolumes() {
 
   local _SGDISK=/sbin/sgdisk
   local _SEC_SIZE=$(cat /sys/block/${_disk#/dev}/queue/physical_block_size || echo 4096)
-  local _SCSIchan=$(ls "/sys/block/${_disk#/dev}/device/scsi_device" | awk '{gsub(":","", $1); print}')
 
   if [ "x${_volFile}" != 'x' ] && [ -f ${_volFile} ]; then
     source ${BOCMDIR}/bash-yaml/script/yaml.sh
@@ -267,8 +266,8 @@ makeVolumes() {
             # Jezeli to ostatni wolumen
             if [ $v = $(expr ${#volume__part[@]} - 1) ]; then
               volume__size[$v]="99%PVS"
-              _lvname="${_lvname}_${_SCSIchan}"
-              volume__dev[$v]="${volume__dev[$v]}_${_SCSIchan}"
+              _lvname="${_lvname}_${_disk#/dev/}"
+              volume__dev[$v]="${volume__dev[$v]}_${_disk#/dev/}"
             else
               _result="Error: Volume size \"0\" is only valid for last volume"
               break
@@ -354,9 +353,7 @@ makeVolumes() {
           case ${volume__fstype[$v]} in
             "vfat") _result=$(_run "/sbin/mkfs.vfat -F 32 /dev/${volume__dev[$v]}") ;;
             "xfs") 
-              # Parsowanie lvname z nazwy wolumenu zmienna volume_dev np mapper/vgroot-lvroot
-              _lvname=${volume__dev[$v]##*-}
-              _result=$(_run "/sbin/mkfs.xfs -s size=${_SEC_SIZE} -f -L ${_lvname} /dev/${volume__dev[$v]}")
+              _result=$(_run "/sbin/mkfs.xfs -s size=${_SEC_SIZE} -f -L ${volume__name[$v]} /dev/mapper/${_vgname}-${_lvname}")
               ;;
             "swap")
               _result=$(_run "/sbin/mkswap -L ${_lvname} /dev/${volume__dev[$v]}")

@@ -160,14 +160,15 @@ makeStdPartition() {
 
     for ((p = 0; p < ${#partition__number[@]}; p++)); do
        # Patch dla dyskow nvme, gdzie numerowanie partycji zaczyna sie litera p
-       local part_number=${partition__number[$p]#p}
+       local part_number
+       if echo ${_devdisk}|grep -q nvme; then part_number=p${partition__number[$p]}; fi
 
-      _result=$(_run "${_SGDISK} -n ${part_number}::+${partition__size[$p]} ${_devdisk} -t ${partition__number[$p]}:${partition__type[$p]} -c ${partition__number[$p]}:${partition__name[$p]}") || break      
+      _result=$(_run "${_SGDISK} -n ${partition__number[$p]}::+${partition__size[$p]} ${_devdisk} -t ${partition__number[$p]}:${partition__type[$p]} -c ${partition__number[$p]}:${partition__name[$p]}") || break      
       
       case ${partition__fstype[$p]} in
-        "vfat") _result=$(_run "/sbin/mkfs.vfat -F 32 -n ${partition__name[$p]} ${_devdisk}${partition__number[$p]}") ;;
+        "vfat") _result=$(_run "/sbin/mkfs.vfat -F 32 -n ${partition__name[$p]} ${_devdisk}${part_number}") ;;
         *) if [ "x${partition__type[$p]}" != 'x8e00' ]; then
-          _result=$(_run "/sbin/mkfs.xfs -s size=${_SEC_SIZE} -f -L ${partition__name[$p]} ${_devdisk}${partition__number[$p]}")
+          _result=$(_run "/sbin/mkfs.xfs -s size=${_SEC_SIZE} -f -L ${partition__name[$p]} ${_devdisk}${part_number}")
           fi
       esac
       if [ $? != 0 ]; then

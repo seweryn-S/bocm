@@ -160,7 +160,7 @@ makeStdPartition() {
 
     for ((p = 0; p < ${#partition__number[@]}; p++)); do
        # Patch dla dyskow nvme, gdzie numerowanie partycji zaczyna sie litera p
-       local part_number
+       local part_number=${partition__number[$p]}
        if echo ${_devdisk}|grep -q nvme; then part_number=p${partition__number[$p]}; fi
 
       _result=$(_run "${_SGDISK} -n ${partition__number[$p]}::+${partition__size[$p]} ${_devdisk} -t ${partition__number[$p]}:${partition__type[$p]} -c ${partition__number[$p]}:${partition__name[$p]}") || break      
@@ -208,11 +208,15 @@ makeVolumes() {
 
     # Tworzenie PV i VG
     for ((v = 0; v < ${#volume__part[@]}; v++)); do
+      # Patch dla dyskow nvme, gdzie numerowanie partycji zaczyna sie litera p
+       local part_number=${volume__part[$v]} 
+       if echo ${_disk}|grep -q nvme; then part_number=p${volume__part[$v]}; fi
+
       # Jezeli nie istnieje PV to utworz
       local npv=""
-      npv=$(lvm pvs --noheadings -o pv_name -S pv_name="${_disk}${volume__part[$v]}" | awk '{ print $1 }')
+      npv=$(lvm pvs --noheadings -o pv_name -S pv_name="${_disk}${part_number}" | awk '{ print $1 }')
       if [ "x$npv" != "x${_disk}${volume__part[$v]}" ]; then
-        _result=$(_run "lvm pvcreate ${_disk}${volume__part[$v]}")
+        _result=$(_run "lvm pvcreate ${_disk}${part_number}")
         if [ $? != 0 ]; then
           break
         fi
@@ -231,14 +235,14 @@ makeVolumes() {
         # Jezeli w VG nie ma PV to dodaj
         local npvinvg=""
         npvinvg=$(lvm vgs --noheadings -o pv_name -S vg_name=${_disk},pv_name="${_disk}${volume__part[$v]}"  | awk '{ print $1 }')
-        if [[ "x$npvinvg" != "x${_disk}${volume__part[$v]}" ]]; then
-          _result=$(_run "lvm vgextend ${_vgname} ${_disk}${volume__part[$v]}")
+        if [[ "x$npvinvg" != "x${_disk}${part_number}" ]]; then
+          _result=$(_run "lvm vgextend ${_vgname} ${_disk}${part_number}")
           if [ $? != 0 ]; then
             break
           fi
         fi
       else
-        _result=$(_run "lvm vgcreate -y ${_vgname} ${_disk}${volume__part[$v]}")
+        _result=$(_run "lvm vgcreate -y ${_vgname} ${_disk}${part_number}")
         if [ $? != 0 ]; then
           break
         fi  
@@ -292,7 +296,7 @@ makeVolumes() {
           "raid1")
             # Jezeli istnieje juz LV o podanej nazwie i nie znajduje sie na przetwarzanym PV
             local nlv=$(lvm lvs --noheadings -o lv_name -S vg_name=${_vgname},lv_name="$_lvname" | awk '{ print $1 }')
-            local devlv=$(lvm lvs --noheadings -o devices -S vg_name=${_vgname},lv_name="$_lvname" | awk '{ print $1 }' | grep "${_disk}${volume__part[$v]}")
+            local devlv=$(lvm lvs --noheadings -o devices -S vg_name=${_vgname},lv_name="$_lvname" | awk '{ print $1 }' | grep "${_disk}${part_number}")
             if [[ "x${nlv}" = "x${_lvname}" && "x${devlv}" = "x" ]]; then
               # Liczba kopii mirror-a
               local stripes=$(lvm lvs --noheadings -o stripes -S lv_name="$_lvname" | awk '{ print $1 }')
@@ -313,9 +317,9 @@ makeVolumes() {
               printf "Creating logical volume ${_lvname}..."
               # Jezeli wielkowsc okreslona procentowo
               if [ $(expr index ${volume__size[$v]} %) != "0" ]; then
-                _result=$(_run "lvm lvcreate -y -n ${_lvname} -l ${volume__size[$v]} --wipesignatures y --zero y $_vgname ${_disk}${volume__part[$v]}")     
+                _result=$(_run "lvm lvcreate -y -n ${_lvname} -l ${volume__size[$v]} --wipesignatures y --zero y $_vgname ${_disk}${part_number}")     
               else
-                _result=$(_run "lvm lvcreate -y -n ${_lvname} -L ${volume__size[$v]} --wipesignatures y --zero y $_vgname ${_disk}${volume__part[$v]}")
+                _result=$(_run "lvm lvcreate -y -n ${_lvname} -L ${volume__size[$v]} --wipesignatures y --zero y $_vgname ${_disk}${part_number}")
               fi
               if [ "$?" != 0 ]; then
                 break
@@ -331,7 +335,7 @@ makeVolumes() {
               continue
             fi
             printf "Creating logical volume ${_lvname}..."
-            _result=$(_run "lvm lvcreate -y -n ${_lvname} -L ${volume__size[$v]} --wipesignatures y --zero y $_vgname ${_disk}${volume__part[$v]}")
+            _result=$(_run "lvm lvcreate -y -n ${_lvname} -L ${volume__size[$v]} --wipesignatures y --zero y $_vgname ${_disk}${part_number}")
             if [ "$?" != 0 ]; then
               break
             fi
@@ -395,16 +399,20 @@ mountAll() {
     # Montowanie partycji
     log_begin_msg "Mounting all partitions ${_dev}"
     for ((p = 0; p < ${#partition__number[@]}; p++)); do
+      # Patch dla dyskow nvme, gdzie numerowanie partycji zaczyna sie litera p
+       local part_number=partition__number[$p]
+       if echo ${_dev}|grep -q nvme; then part_number=p${partition__number[$p]}; fi
+
       if [[ "x${partition__mnt[$p]}" != "x" && "x${partition__mnt[$p]}" != "x/" && "x${partition__mnt[$p]}" != "x\"\"" ]]; then
         _result=$(_run "mkdir -p ${_rootmnt}${partition__mnt[$p]}") || break
 
         if [[ "x${partition__mntopt[$p]}" != "x" && "x${partition__mntopt[$p]}" != "x\"\"" ]]; then
-          _result=$(_run "mount -o ${partition__mntopt[$p]} ${_dev}${partition__number[$p]} ${_rootmnt}${partition__mnt[$p]}")
+          _result=$(_run "mount -o ${partition__mntopt[$p]} ${_dev}${part_number} ${_rootmnt}${partition__mnt[$p]}")
         else
-          _result=$(_run "mount ${_dev}${partition__number[$p]} ${_rootmnt}${partition__mnt[$p]}")
+          _result=$(_run "mount ${_dev}${part_number} ${_rootmnt}${partition__mnt[$p]}")
         fi
         if [ ${_result} != "OK" ]; then
-          printf "Error mounting partition ${_dev}${partition__number[$p]}! ${_result}"
+          printf "Error mounting partition ${_dev}${part_number}! ${_result}"
         fi
       fi
     done

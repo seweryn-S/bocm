@@ -266,8 +266,12 @@ makeVolumes() {
             # Jezeli to ostatni wolumen
             if [ $v = $(expr ${#volume__part[@]} - 1) ]; then
               volume__size[$v]="99%PVS"
-              _lvname="${_lvname}_${_disk#/dev/}"
-              volume__dev[$v]="${volume__dev[$v]}_${_disk#/dev/}"
+              # Doprecyzowanie nazwy ostatniego wolumenu
+              # Nazwa konczy sie liczba istniejacych wolumenow o podobnej nazwie powiekszona o 1
+              local _lv_count=$(lvm lvs|grep ${_lvname}|wc -l)
+              $(let "_lv_count=${_lv_count} + 1") 
+              _lvname="${_lvname}${_lv_count}"
+              volume__dev[$v]="${volume__dev[$v]}${_lv_count}"
             else
               _result="Error: Volume size \"0\" is only valid for last volume"
               break

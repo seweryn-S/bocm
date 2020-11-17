@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ "$#" == 0 ]; then
+  printf "Poprawne wywołanie: $0 sciezka_katalogu_w_ktorym_ma_byc zapisany initrd.img i vmlinuz\n"
+  exit ${PARAMERROR}
+fi
+
+OUTDIR=$1
+IMAGE_NAME=bocm
+#CONTAINER=bocm
+DIR=$(pwd)
+RUNOPT="-v ${DIR}/etc/bocm:/etc/bocm -v ${DIR}/etc/initramfs-tools:/etc/initramfs-tools"
+
+docker build -t ${IMAGE_NAME} ./ && \
+CONTAINER=$(docker run -d --rm ${RUNOPT} ${IMAGE_NAME} /bin/sleep 1000) && \
+KERNELV=$(docker exec ${CONTAINER} ls -l /vmlinuz|awk '{ print $11 }') && \
+KERNELV=${KERNELV#boot/vmlinuz-} && \
+#docker exec -it ${CONTAINER} /bin/bash
+docker exec ${CONTAINER} update-initramfs -c -k ${KERNELV} && \
+KERNEL=$(docker exec ${CONTAINER} readlink -f /vmlinuz) && \
+INITRD=$(docker exec ${CONTAINER} readlink -f /initrd.img) && \
+docker cp ${CONTAINER}:${KERNEL} ${OUTDIR}/vmlinuz && \
+chmod go+r ${DIR}/vmlinuz && \
+docker cp ${CONTAINER}:${INITRD} ${OUTDIR}/initrd.img && \
+docker stop -t 0 ${CONTAINER}

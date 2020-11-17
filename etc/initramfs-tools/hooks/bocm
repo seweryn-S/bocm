@@ -79,8 +79,8 @@ copy_file BOCM_VERSION /etc/bocm/VERSION
 copy_file SSH_PASSWD /etc/passwd /etc/passwd
 
 # Dodanie shella fish
-copy_exec /usr/bin/fish /usr/bin/fish
-mkdir -p ${DESTDIR}/usr/share/fish/
-cp -ar /usr/share/fish/* ${DESTDIR}/usr/share/fish/
+#copy_exec /usr/bin/fish /usr/bin/fish
+#mkdir -p ${DESTDIR}/usr/share/fish/
+#cp -ar /usr/share/fish/* ${DESTDIR}/usr/share/fish/
 
 exit 0

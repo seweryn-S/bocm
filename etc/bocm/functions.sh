@@ -550,9 +550,9 @@ bocm_top() {
     return 1
   )
 
-  printf "\n************************\n"
+  printf "\n************************************\n"
   printf " BOCM vesrion $(cat /etc/bocm/VERSION)\n"
-  printf "************************\n\n"
+  printf "**************************************\n\n"
 
   # Jezeli nie ma synchronizacji nic nie rob
   if [ "x${IPXEHTTP}" = 'x' ]; then
@@ -589,7 +589,6 @@ bocm_top() {
       log_end_msg
     fi
     log_begin_msg "Make volumes"
-    printf "\n"
     RESULT=$(makeVolumes ${DISKDEV} ${VOLUMES_FILE})
     if [[ "$?" != "0" ]]; then
       panic "Error in: makeVolumes ${DISKDEV} - ${RESULT}"
@@ -597,7 +596,7 @@ bocm_top() {
     log_end_msg
 
     log_begin_msg "Activating volumegroups"
-    _run "lvm vgchange -ay"
+    RESULT=$(_run "lvm vgchange -ay")
     log_end_msg
   else
     panic "Manual disk manage."

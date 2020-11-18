@@ -38,6 +38,12 @@ copy_exec /usr/sbin/xfs_db /sbin
 copy_exec /sbin/mkfs.vfat /sbin
 copy_exec /sbin/mkswap /sbin
 copy_exec /usr/bin/rsync /bin
+# Dodane recznie, poniewaz standardowy skrypt /usr/share/initramfs-tools/hooks/fsck
+# podczas wykrywania czy sa potrzebne narzedzia weryfikuje typ systemu plikow ROOT
+# poniewaz budujemy initramfs w srodowisku kontenerowym, to nie ma prawidlowego ROOT fs-a
+# narzedzia sa wykorzystywane standardowo do sprawdzenia ROOT fs-a podczas bootowania
+copy_exec /sbin/fsck
+copy_exec /sbin/logsave
 
 copy_exec /usr/bin/head	/bin
 copy_exec /usr/bin/md5sum /bin

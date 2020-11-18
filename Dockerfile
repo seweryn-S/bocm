@@ -21,7 +21,7 @@ RUN apt-get install -y --no-install-recommends \
 
 # Disk tools
 RUN apt-get install -y --no-install-recommends \  
-    gdisk lvm2 xfsprogs dosfstools
+    gdisk lvm2 xfsprogs dosfstools parted
 
 # Network tools
 RUN apt-get install -y --no-install-recommends \

@@ -29,6 +29,7 @@ copy_exec /bin/ln
 copy_exec /bin/chown
 
 copy_exec /sbin/sgdisk /sbin
+copy_exec /sbin/partprobe /sbin
 copy_exec /bin/lsblk /bin
 
 copy_exec /sbin/mkfs.xfs /sbin

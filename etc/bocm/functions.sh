@@ -103,19 +103,28 @@ cleanDisk() {
   local _result="OK"
   local devDisk=$1
 
-   local vgs=""
-   local pvs=""
+  local vgs=""
+  local pvs=""
+  local lvs=""
 
-  # Ustalamy czy sa PV i VG
-  vgs=$(lvm pvs --noheadings -o vg_name -S pv_name=~"$devDisk.*")
-  for vg in $vgs; do
+  vgs=$(lvm vgs --noheadings -o vg_name -S pv_name=~${devDisk})
+  for vg in ${vgs}; do
     _result=$(_run "lvm vgchange -a n \"${vg}\"") || break
-    pvs=$(lvm pvs --noheadings -o pv_name -S vg_name="${vg}"|grep ${devDisk} |  awk '{ print $1 }')
-    _result=$(_run "lvm pvremove -y -ff ${pvs}") || break
-    _result=$(_run "vgreduce --removemissing --force \"${vg}\"") || break
+    lvs=$(lvm lvs --noheadings -o lv_name,devices |grep ${devDisk}|awk '{print $1}')
+    for lv in ${lvs}; do
+      _result=$(_run "lvm lvremove -y -ff ${lv}")
+    done
+    pvs=$(lvm pvs --noheadings -o pv_name -S pv_name=~${devDisk})
+    for pv in ${pvs}; do
+      _result=$(_run "lvm vgreduce -y ${vg} ${pv}") || break
+      _result=$(_run "lvm pvremove -y -ff ${pv}") || break
+    done
+    _result=$(_run "lvm vgreduce --removemissing --force \"${vg}\"") || break
     _result=$(_run "lvm vgchange -a y -P \"${vg}\"") || break
   done
-  _result=$(_run "sgdisk -Z $devDisk")
+  # Czyscimy dysk
+  _result=$(_run "sgdisk -Z ${devDisk}")
+  _result=$(_run "/sbin/partprobe ${devDisk}")
   printf "${_result}"
 }
 
@@ -163,7 +172,8 @@ makeStdPartition() {
        local part_number=${partition__number[$p]}
        if echo ${_devdisk}|grep -q nvme; then part_number=p${partition__number[$p]}; fi
 
-      _result=$(_run "${_SGDISK} -n ${partition__number[$p]}::+${partition__size[$p]} ${_devdisk} -t ${partition__number[$p]}:${partition__type[$p]} -c ${partition__number[$p]}:${partition__name[$p]}") || break      
+      _result=$(_run "${_SGDISK} -n ${partition__number[$p]}::+${partition__size[$p]} ${_devdisk} -t ${partition__number[$p]}:${partition__type[$p]} -c ${partition__number[$p]}:${partition__name[$p]}") || break
+      _result=$(_run "/sbin/partprobe ${_devdisk}")
       
       case ${partition__fstype[$p]} in
         "vfat") _result=$(_run "/sbin/mkfs.vfat -F 32 -n ${partition__name[$p]} ${_devdisk}${part_number}") ;;
@@ -214,7 +224,7 @@ makeVolumes() {
       # Jezeli nie istnieje PV to utworz
       local npv=""
       npv=$(lvm pvs --noheadings -o pv_name -S pv_name="${_disk}${part_number}" | awk '{ print $1 }')
-      if [ "x$npv" != "x${_disk}${volume__part[$v]}" ]; then
+      if [ "x$npv" != "x${_disk}${part_number}" ]; then
         _result=$(_run "lvm pvcreate ${_disk}${part_number}")
         if [ $? != 0 ]; then
           break
@@ -233,7 +243,7 @@ makeVolumes() {
       if [[ "x$nvg" == "x${_vgname}" ]]; then
         # Jezeli w VG nie ma PV to dodaj
         local npvinvg=""
-        npvinvg=$(lvm vgs --noheadings -o pv_name -S vg_name=${_disk},pv_name="${_disk}${volume__part[$v]}"  | awk '{ print $1 }')
+        npvinvg=$(lvm vgs --noheadings -o pv_name -S vg_name=${_vgname},pv_name="${_disk}${part_number}"  | awk '{ print $1 }')
         if [[ "x$npvinvg" != "x${_disk}${part_number}" ]]; then
           _result=$(_run "lvm vgextend ${_vgname} ${_disk}${part_number}")
           if [ $? != 0 ]; then
@@ -268,18 +278,15 @@ makeVolumes() {
               volume__size[$v]="99%PVS"
               # Doprecyzowanie nazwy ostatniego wolumenu
               # Nazwa konczy sie liczba istniejacych wolumenow o podobnej nazwie powiekszona o 1
-              local _lv_count=$(lvm lvs|grep ${_lvname}|wc -l)
-              $(let "_lv_count=${_lv_count} + 1") 
-              _lvname="${_lvname}${_lv_count}"
-              volume__dev[$v]="${volume__dev[$v]}${_lv_count}"
+              #local _lv_count=$(lvm lvs --noheadings -o lv_name -S vg_name=${_vgname},lv_name=~${_lvname}|wc -l)
+              #let _lv_count=${_lv_count}+1 
+              read MINOR MAJOR < <(stat -c '%T %t' ${_disk}) 
+              _lvname="${_lvname}${MAJOR}_${MINOR}"
+              volume__dev[$v]="${volume__dev[$v]}${MAJOR}_${MINOR}"
             else
               _result="Error: Volume size \"0\" is only valid for last volume"
               break
             fi
-            #_result=$(_run "lvm lvcreate -y -n ${_lvname} -l ${volume__size[$v]} --wipesignatures y --zero y ${_vgname} ${_disk}${volume__part[$v]}")
-            #if [ "$?" != 0 ]; then
-            #  break
-            #fi
           fi
         fi
 
@@ -338,7 +345,12 @@ makeVolumes() {
               continue
             fi
             printf "Creating logical volume ${_lvname}..."
-            _result=$(_run "lvm lvcreate -y -n ${_lvname} -L ${volume__size[$v]} --wipesignatures y --zero y $_vgname ${_disk}${part_number}")
+            # Jezeli wielkowsc okreslona procentowo
+            if [ $(expr index ${volume__size[$v]} %) != "0" ]; then
+              _result=$(_run "lvm lvcreate -y -n ${_lvname} -l ${volume__size[$v]} --wipesignatures y --zero y $_vgname ${_disk}${part_number}")
+            else
+              _result=$(_run "lvm lvcreate -y -n ${_lvname} -L ${volume__size[$v]} --wipesignatures y --zero y $_vgname ${_disk}${part_number}")
+            fi
             if [ "$?" != 0 ]; then
               break
             fi
@@ -401,7 +413,7 @@ mountAll() {
     log_begin_msg "Mounting all partitions ${_dev}"
     for ((p = 0; p < ${#partition__number[@]}; p++)); do
       # Patch dla dyskow nvme, gdzie numerowanie partycji zaczyna sie litera p
-       local part_number=partition__number[$p]
+       local part_number=${partition__number[$p]}
        if echo ${_dev}|grep -q nvme; then part_number=p${partition__number[$p]}; fi
 
       if [[ "x${partition__mnt[$p]}" != "x" && "x${partition__mnt[$p]}" != "x/" && "x${partition__mnt[$p]}" != "x\"\"" ]]; then
@@ -624,6 +636,7 @@ bocm_bottom() {
   local CONFIMAGE=${IPXEHTTP#*\/}
   local CONFIMAGE="/srv/${CONFIMAGE%\/*}/CONFIGS/$(hostname)/"
 
+  printf "\n"
   mount -o remount,rw ${rootmnt} || panic "could not remount rw ${rootmnt}"
   mountAll ${DISKDEV} ${rootmnt} ${_PARTITIONS_FILE}
 

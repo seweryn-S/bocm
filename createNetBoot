@@ -11,6 +11,12 @@ IMAGE_NAME=bocm
 DIR=$(pwd)
 RUNOPT="-v ${DIR}/etc/bocm:/etc/bocm -v ${DIR}/etc/initramfs-tools:/etc/initramfs-tools"
 
+VER=$(git describe --long 2>&1)
+if echo ${VER}|grep -q fatal; then
+  VER=$(git describe --all --long)
+fi
+echo ${VER} > etc/bocm/VERSION
+
 docker build -t ${IMAGE_NAME} ./ && \
 CONTAINER=$(docker run -d --rm ${RUNOPT} ${IMAGE_NAME} /bin/sleep 1000) && \
 KERNELV=$(docker exec ${CONTAINER} ls -l /vmlinuz|awk '{ print $11 }') && \
@@ -23,3 +29,5 @@ docker cp ${CONTAINER}:${KERNEL} ${OUTDIR}/vmlinuz && \
 chmod go+r ${DIR}/vmlinuz && \
 docker cp ${CONTAINER}:${INITRD} ${OUTDIR}/initrd.img && \
 docker stop -t 0 ${CONTAINER}
+
+rm -f etc/bocm/VERSION

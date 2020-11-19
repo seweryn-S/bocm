@@ -229,6 +229,9 @@ makeVolumes() {
         if [ $? != 0 ]; then
           break
         fi
+      else
+        # Oznacza ze prawidlowy PV juz istnieje i nic nie trzeba bylo robic
+        _result="OK"
       fi
 
       # Parsowanie vgname z nazwy wolumenu zmienna volume_dev np mapper/vgroot-lvroot
@@ -249,6 +252,9 @@ makeVolumes() {
           if [ $? != 0 ]; then
             break
           fi
+        else
+          # Bul juz dodany prawidlowy PV do VG
+          _result="OK"
         fi
       else
         _result=$(_run "lvm vgcreate -y ${_vgname} ${_disk}${part_number}")

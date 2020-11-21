@@ -1,9 +1,6 @@
 # Root disk device:
 export DISKDEV="/dev/sda"
 
-# Filtr dyskow widzianych w /dev/disk/by-path
-export DISKFILTER="\(.*scsi-[0-9]:[0-9]:[0-9]:[0-9]\|.*ata-[0-9]\|.*nvme-[0-9]\)"
-
 # Root volume group
 export VG_NAME=vgroot
 

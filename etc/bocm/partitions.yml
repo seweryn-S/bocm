@@ -74,7 +74,7 @@ volume:
     size: 0
     mnt: ""
     mntopt: ""
-    raid: raid1
+    raid: n
   # Wolumenty typu USR nie sa kasowane i nadpisywane 
   # chyba ze zostanie dodana opcja make_volumes do kernela
     type: USR

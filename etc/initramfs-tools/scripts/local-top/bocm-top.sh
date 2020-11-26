@@ -42,6 +42,7 @@ bin/bash -c ". /scripts/functions; . ./${BOCMDIR}/functions.sh; ssh_config;"
 # Nadpisywanie plikow initramfs-u z katalogu konfiguracyjnego
 bin/bash -c ". /scripts/functions; . ./${BOCMDIR}/functions.sh; override_initrd_scripts;"
 # Tu korzystamy z juz nadpisanych skryptow i funkcji
+maybe_break before_bocm_top
 bin/bash -c ". /scripts/functions; . ./${BOCMDIR}/functions.sh; bocm_top;"
 
 exit 0

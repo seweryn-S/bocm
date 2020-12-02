@@ -21,7 +21,7 @@ RUN apt-get install -y --no-install-recommends \
 
 # Disk tools
 RUN apt-get install -y --no-install-recommends \  
-    gdisk lvm2 xfsprogs dosfstools parted
+    gdisk lvm2 xfsprogs dosfstools parted 
 
 # Network tools
 RUN apt-get install -y --no-install-recommends \
@@ -29,3 +29,6 @@ RUN apt-get install -y --no-install-recommends \
     ifenslave \
     vlan \
     wget
+
+# Disk_info
+RUN cd /usr/local/sbin/; wget --no-check-certificate https://raw.githubusercontent.com/bockpl/ubuntu18.04src/master/bin/disk_info; chmod +x disk_info; cd /

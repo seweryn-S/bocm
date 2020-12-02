@@ -85,6 +85,9 @@ copy_file BOCM_VERSION /etc/bocm/VERSION
 # Na potrzeby klienta ssh
 copy_file SSH_PASSWD /etc/passwd /etc/passwd
 
+# Narzedzie do listowania dyskow
+copy_file DISK_INFO /usr/local/sbin/disk_info /bin/disk_info
+
 # Dodanie shella fish
 #copy_exec /usr/bin/fish /usr/bin/fish
 #mkdir -p ${DESTDIR}/usr/share/fish/

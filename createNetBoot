@@ -25,9 +25,12 @@ KERNELV=${KERNELV#boot/vmlinuz-} && \
 docker exec ${CONTAINER} update-initramfs -c -k ${KERNELV} && \
 KERNEL=$(docker exec ${CONTAINER} readlink -f /vmlinuz) && \
 INITRD=$(docker exec ${CONTAINER} readlink -f /initrd.img) && \
-docker cp ${CONTAINER}:${KERNEL} ${OUTDIR}/vmlinuz && \
+KVER=$(docker exec ${CONTAINER} uname -r) && \
+docker cp ${CONTAINER}:${KERNEL} ${OUTDIR}/vmlinuz-${KVER} && \
+ln -sf ./vmlinuz-${KVER} ${OUTDIR}/vmlinuz && \
 chmod go+r ${DIR}/vmlinuz && \
-docker cp ${CONTAINER}:${INITRD} ${OUTDIR}/initrd.img && \
+docker cp ${CONTAINER}:${INITRD} ${OUTDIR}/initrd.img-${KVER}-${VER} && \
+ln -sf ./initrd.img-${KVER}-${VER} ${OUTDIR}/initrd.img && \
 docker stop -t 0 ${CONTAINER}
 
 rm -f etc/bocm/VERSION

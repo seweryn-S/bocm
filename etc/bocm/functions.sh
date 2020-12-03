@@ -635,6 +635,14 @@ bocm_top() {
     
   fi
 
+  # Ustawiona zmienna DISK_INFO, przydatny przy pierwszym starcie gdy nie znamy dysku do bootowania
+  if [ "x${DISK_INFO}" = 'xy' ]; then
+    disk_info
+    printf "\n%s" "You can reboot system."
+    /bin/sh -i
+    exit
+  fi
+
   # Zabezpieczenie na wypadek opoznionego pojawienia sie dysku w systemie, wystepuje czesto na rzeczywistym sprzecie
   while [ "x$(ls ${DISKDEV} 2>/dev/null)" != "x${DISKDEV}" ]; do
     printf "No %s disk, waiting...\n" "${DISKDEV}"
@@ -678,6 +686,11 @@ bocm_bottom() {
   )
 
   if [ "x${IPXEHTTP}" = 'x' ]; then
+    exit
+  fi
+
+  # Ustawiona zmienna DISK_INFO, przydatny przy pierwszym starcie gdy nie znamy dysku do bootowania
+  if [ "x${DISK_INFO}" = 'xy' ]; then
     exit
   fi
 

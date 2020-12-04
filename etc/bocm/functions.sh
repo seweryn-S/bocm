@@ -116,6 +116,29 @@ _getDiskID() {
   printf '%s' ${_diskID}
 }
 
+# Funkcja zwraca nazwe dysku "/dev/sda" dla podanego w parametrze identyfikatora "/dev/disk/by-path/...."
+# Wejscie:
+#   _devID - sciezka do dysku np. /dev/disk/by-path/...
+# Wyjscie:
+#   _diskName - nazwa dysku
+_getDiskName() {
+  local _devID=$1
+  local _devName=""
+
+  # Jezeli _devID nie jest krotka nazwa /dev/sdX lub /dev/nvmeXnX
+  if ! echo ${_devID}|grep -qE '\/dev\/sd[a-z]|\/dev\/nvme[0-9]n[0-9]'; then
+    _devName=/dev/$(udevadm info -q name "${_devID}")
+    if ! [ -b ${_devName} ]; then
+      panic "Bad boot device ${_devID}"
+      exit 1
+    fi
+  else
+    _devName=${_devID}
+  fi
+
+  printf '%s' "${_devName}"
+}
+
 # Funkcja zwraca wielkosc pamieci RAM w GB (np. 4)
 _getMemorySize() {
   local RESULT="0"
@@ -643,6 +666,10 @@ bocm_top() {
     exit
   fi
 
+  DISKDEV=$(_getDiskName ${DISKDEV})
+  log_warning_msg "Boot device ${DISKDEV}"
+  
+
   # Zabezpieczenie na wypadek opoznionego pojawienia sie dysku w systemie, wystepuje czesto na rzeczywistym sprzecie
   while [ "x$(ls ${DISKDEV} 2>/dev/null)" != "x${DISKDEV}" ]; do
     printf "No %s disk, waiting...\n" "${DISKDEV}"
@@ -693,6 +720,8 @@ bocm_bottom() {
   if [ "x${DISK_INFO}" = 'xy' ]; then
     exit
   fi
+
+  DISKDEV=$(_getDiskName ${DISKDEV})
 
   # Na potrzeby sciagania image-u po ssh
   #local _SERVER=${IPXEHTTP%%\/*}

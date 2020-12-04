@@ -1,5 +1,9 @@
 # Root disk device:
-export DISKDEV="/dev/sda"
+# Mozliwe dwie formy definiowania dyskow,
+# krotka - wygodna w uzyciu ale jesli dyski zmieniaja swoja kolejnosc podczas startu to zle dziala
+# dluga - malo wygodna ale odporna na zmiany kolejnosci dyskow miedzy restartami
+#export DISKDEV="/dev/sda"
+export DISKDEV=/dev/disk/by-path/pci-0000:03:00.0-nvme-1
 
 # Root volume group
 export VG_NAME=vgroot

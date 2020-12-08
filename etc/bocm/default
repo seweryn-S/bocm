@@ -5,9 +5,6 @@
 #export DISKDEV="/dev/sda"
 export DISKDEV=/dev/disk/by-path/pci-0000:03:00.0-nvme-1
 
-# Root volume group
-export VG_NAME=vgroot
-
 # File with default volumes
 export VOLUMES_FILE=${BOCMDIR}/partitions.yml
 

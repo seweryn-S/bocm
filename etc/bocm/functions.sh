@@ -79,6 +79,25 @@ source ${BOCMDIR}/default
 # Poprawa wbudowywanej automatycznie configuracji lvm.conf
 sed -i -e 's/use_lvmetad = 1/use_lvmetad =0/g' /etc/lvm/lvm.conf
 
+_unsetArrays() {
+  unset conf_diskdev
+  unset partition__number
+  unset partition__name
+  unset partition__type
+  unset partition__fstype
+  unset partition__mnt
+  unset partition__mntopt
+  unset partition__size
+  unset volume__part
+  unset volume__name
+  unset volume__dev
+  unset volume__fstype
+  unset volume__size
+  unset volume__mnt
+  unset volume__mntopt
+  unset volume__raid
+}
+
 # Funkcja zastępuje polecenie by dodac w kazdym wypadku parametr
 # --config "global { use_lvmetad = 0 }"
 # lvm() {
@@ -118,12 +137,26 @@ _getDiskID() {
 
 # Funkcja zwraca nazwe dysku "/dev/sda" dla podanego w parametrze identyfikatora "/dev/disk/by-path/...."
 # Wejscie:
-#   _devID - sciezka do dysku np. /dev/disk/by-path/...
+#   _volFile - sciezka do pliku opisu dysku, prartycji, wolumenow. Domyslanie ${VOLUMES_FILE}
 # Wyjscie:
 #   _diskName - nazwa dysku
+# shellcheck disable=SC2120
 _getDiskName() {
-  local _devID=$1
+  local _devID=""
   local _devName=""
+  local _volFile=${1:-${VOLUMES_FILE}}
+
+  if [ -f ${_volFile} ]; then
+    # shellcheck disable=SC1090
+    source ${BOCMDIR}/bash-yaml/script/yaml.sh
+
+    create_variables "${_volFile}"
+    # shellcheck disable=SC2154
+    _devID=${conf_diskdev}
+  else
+    printf '%s' "Can't find volumes definition file: ${_volFile}"
+    exit 1
+  fi
 
   # Jezeli _devID nie jest krotka nazwa /dev/sdX lub /dev/nvmeXnX
   if ! echo ${_devID}|grep -qE '\/dev\/sd[a-z]|\/dev\/nvme[0-9]n[0-9]'; then
@@ -135,6 +168,8 @@ _getDiskName() {
   else
     _devName=${_devID}
   fi
+
+  _unsetArrays
 
   printf '%s' "${_devName}"
 }
@@ -201,24 +236,6 @@ cleanDisk() {
 
   printf "%s end\n\n" "${FUNCNAME[0]}" >> ${_logfile}
   return ${_return}
-}
-
-_unsetArrays() {
-  unset partition__number
-  unset partition__name
-  unset partition__type
-  unset partition__fstype
-  unset partition__mnt
-  unset partition__mntopt
-  unset partition__size
-  unset volume__part
-  unset volume__name
-  unset volume__dev
-  unset volume__fstype
-  unset volume__size
-  unset volume__mnt
-  unset volume__mntopt
-  unset volume__raid
 }
 
 # Tworzenie standardowego schematu podzialu dysku na partycje
@@ -666,7 +683,7 @@ bocm_top() {
     exit
   fi
 
-  DISKDEV=$(_getDiskName ${DISKDEV})
+  DISKDEV=$(_getDiskName)
   log_warning_msg "Boot device ${DISKDEV}"
   
 
@@ -721,7 +738,7 @@ bocm_bottom() {
     exit
   fi
 
-  DISKDEV=$(_getDiskName ${DISKDEV})
+  DISKDEV=$(_getDiskName)
 
   # Na potrzeby sciagania image-u po ssh
   #local _SERVER=${IPXEHTTP%%\/*}

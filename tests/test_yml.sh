@@ -21,6 +21,7 @@ create_variables ${BASEDIR}/partitions.yml
 #echo il_part=${#part__number[@]}
 #echo il_vol=${#vol__part[@]}
 
+printf '\n%s\n' "Analiza zmiennych"
 for (( i=0; i<${#partition__number[@]}; i++ )); do
   echo part: ${partition__number[i]}
   for (( v=0; v<${#volume__part[@]}; v++ )); do

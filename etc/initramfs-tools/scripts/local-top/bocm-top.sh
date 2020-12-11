@@ -16,7 +16,7 @@ esac
 . /scripts/functions
 
 # Jezeli nie jest zdefiniowany szablon na MFS i nie jest to start z iPXE http to nic nie rob
-if [ "x${IPXEHTTP}" = "x" ]; then
+if [ "x${IMG_URI}" = "x" ]; then
   exit 0
 fi
 

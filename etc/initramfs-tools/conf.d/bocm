@@ -7,9 +7,16 @@ export TEMPLATEPATH="${BOCMDIR}/${TEMPLATEFILE}"
 # Parse command line options for global options
 for x in $(cat /proc/cmdline); do
         case $x in
-	ipxehttp*)
-		export IPXEHTTP="${x#ipxehttp=}"
-		;;
+        img_uri*)
+                export IMG_URI="${x#img_uri=}"
+                export IMG_SERVER=$(echo ${IMG_URI}|cut -d '/' -f 1)
+                export IMG_PATH=${IMG_URI#*\/}
+                ;;
+        cfg_uri*)
+                export CFG_URI="${x#cfg_uri=}"
+                export CFG_SERVER=$(echo ${CFG_URI}|cut -d '/' -f 1)
+                export CFG_PATH=${CFG_URI#*\/}
+                ;;
         make_volumes*)
                 export MAKE_VOLUMES='y'
                 ;;

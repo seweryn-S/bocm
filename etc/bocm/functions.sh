@@ -636,23 +636,26 @@ ssh_config() {
   echo "StrictHostKeyChecking=no" >>/etc/ssh/ssh_config
 }
 
-override_initrd_scripts() {
-  # Jezeli zmienna zdefiniowana
-  if [[ "x${IPXEHTTP}" != 'x' ]]; then
-    local CONFIMAGE
-    CONFIMAGE=${IPXEHTTP#*\/}
-    CONFIMAGE="/srv/${CONFIMAGE%\/*}/CONFIGS/$(hostname)"
-    CONFIMAGE="${CONFIMAGE}/initrd.conf/"
+# Funkcja dostosowuje konfiguracje rclone
+# _server - adres serwera
+_config_rclone() {
+  local _img_server=$1
+  local _cfg_server=$2
+  sed -ie "s/\${img_server}/${_img_server}/g" ${BOCMDIR}/rclone.conf
+  sed -ie "s/\${cfg_server}/${_cfg_server}/g" ${BOCMDIR}/rclone.conf
+}
 
-    local SSHC="/usr/bin/ssh -i ${BOCMDIR}/boipxe_rsa root@${IPXEHTTP%%\/*}"
-    local CONFEXIST
-    CONFEXIST=$(${SSHC} "if [ -d ${CONFIMAGE} ]; then echo Exist; else echo NotExist; fi")
-    if [[ "${CONFEXIST}" != 'NotExist' ]]; then
-      log_begin_msg "Download configuration initrd from ${CONFIMAGE}"
+override_initrd_scripts() {
+  log_warning_msg "Correcting server address in rclone.conf"
+  
+  _config_rclone ${IMG_SERVER} ${CFG_SERVER}
+
+  # Jezeli zmienna zdefiniowana
+  if [[ "x${IMG_URI}" != 'x' ]]; then
+    log_begin_msg "Download configuration initrd from CFG:${CFG_PATH}/${INITRD_CONF_PATH}"
       echo -ne "\n"
-      ${SSHC} "tar -zcf - -C ${CONFIMAGE} ." | tar zxf - -C / || panic "Configuration ${CONFIMAGE} download error!"
-      log_end_msg
-    fi
+      /bin/rclone --config ${BOCMDIR}/rclone.conf copy --no-check-dest -L CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ / || panic "Configuration ${CFG_PATH} download error!"
+    log_end_msg
   fi
 }
 
@@ -670,9 +673,8 @@ bocm_top() {
   printf "**************************************\n\n"
 
   # Jezeli nie ma synchronizacji nic nie rob
-  if [ "x${IPXEHTTP}" = 'x' ]; then
+  if [ "x${IMG_URI}" = 'x' ]; then
     return 1 
-    
   fi
 
   # Ustawiona zmienna DISK_INFO, przydatny przy pierwszym starcie gdy nie znamy dysku do bootowania
@@ -700,7 +702,7 @@ bocm_top() {
     if [[ "x${MAKE_VOLUMES}" =~ ^(xy|xY|xyes|xtrue|x1)$ ]]; then
       log_warning_msg "Node reinitialization requested"
 
-      log_begin_msg "Erasing root disk (${DISKDEV})"
+      log_begin_msg "Erasing root disk ${DISKDEV}"
       cleanDisk ${DISKDEV}
       log_end_msg
 
@@ -729,7 +731,7 @@ bocm_bottom() {
     return
   )
 
-  if [ "x${IPXEHTTP}" = 'x' ]; then
+  if [ "x${IMG_URI}" = 'x' ]; then
     exit
   fi
 
@@ -740,61 +742,52 @@ bocm_bottom() {
 
   DISKDEV=$(_getDiskName)
 
-  # Na potrzeby sciagania image-u po ssh
-  #local _SERVER=${IPXEHTTP%%\/*}
-  local _TEMPLATE=${IPXEHTTP##*\/}
-  #local IMAGE="/srv/${IPXEHTTP#*\/}/${TEMPLATE}.tgz"
-  local _IMAGE="http://${IPXEHTTP}/${_TEMPLATE}.tgz"
-
-  local _PARTITIONS_FILE=${BOCMDIR}/partitions.yml
-
-  local CONFIMAGE
-  CONFIMAGE=${IPXEHTTP#*\/}
-  CONFIMAGE="/srv/${CONFIMAGE%\/*}/CONFIGS/$(hostname)/"
-
   printf "\n"
   mount -o remount,rw ${rootmnt} || panic "could not remount rw ${rootmnt}"
-  mountAll ${DISKDEV} ${rootmnt} ${_PARTITIONS_FILE}
+  mountAll ${DISKDEV} ${rootmnt} ${VOLUMES_FILE}
 
-  log_begin_msg "Downloading system image"
-  if cd ${rootmnt}; then
+  log_begin_msg "Downloading system image from IMG:${IMG_PATH}"
     printf "\n"
-    /usr/bin/wget -q --show-progress -O - ${_IMAGE} | tar zxf - || panic "System image ${_IMAGE} download error!"
-    #/usr/bin/ssh -i ${BOCMDIR}/boipxe_rsa root@${_SERVER} "dd if=${_IMAGE}"|tar zxf - || panic "System image ${_IMAGE} download error!"
-    log_end_msg
+    local _originalsize=""
+    _originalsize=$(/bin/rclone --config ${BOCMDIR}/rclone.conf size IMG:${IMG_PATH} --json|sed -E 's/\{"([a-z]+)":([0-9]+)\,"([a-z]+)":([0-9]+)\}/\4/g')
+    cd ${rootmnt} || panic "Error! I can't change directory to ${rootmnt}"
+    /bin/rclone --config ${BOCMDIR}/rclone.conf cat IMG:${IMG_PATH} | pv -s ${_originalsize} | tar -xzf -
+    # Skasowanie pozostałości środowiska przygotowania szablinu docker
+    if [ -f .dockerenv ]; then
+      rm -rf .dockerenv
+    fi
+    cd /
+  log_end_msg
 
-    log_begin_msg "Download configuration from ${CONFIMAGE}"
+  log_begin_msg "Download configuration from CFG:${CFG_PATH}/"
     printf "\n"
-    /usr/bin/ssh -o BatchMode=yes -i ${BOCMDIR}/boipxe_rsa root@${IPXEHTTP%%\/*} "tar -zcf - --exclude=boot.ipxe --exclude=.git --exclude=initrd.conf -C ${CONFIMAGE}/ ." | tar zxf - -C ${rootmnt} || panic "Configuration ${CONFIMAGE} download erro!"
-    log_end_msg
-  else
-    panic "Error! I can't change directory to new ROOT ${rootmnt}"
-  fi
+    /bin/rclone --config ${BOCMDIR}/rclone.conf copy --no-check-dest -L --exclude=boot.ipxe --exclude=.git/** --exclude=initrd.conf/** CFG:${CFG_PATH}/ ${rootmnt}/
+  log_end_msg
+
   log_begin_msg "Installing bootloader, rebuild initramfs"
-  
-  # Zabezpieczenie istniejącego fstab przed nadpisaniem
-  if [ -f ${rootmnt}/etc/fstab ]; then
-    mv ${rootmnt}/etc/fstab ${rootmnt}/etc/fstab.org
-  fi
-  cp ${BOCMDIR}/fstab ${rootmnt}/etc/fstab
-  mount -o bind /dev ${rootmnt}/dev
-  mount -o bind /proc ${rootmnt}/proc
-  mount -o bind /sys ${rootmnt}/sys
-  change_kernelparams ${rootmnt}/etc/default/grub
-  chroot ${rootmnt} /bin/bash -c " \
-      sed -i -e 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
-      && update-grub &> /dev/null \
-      && grub-install --efi-directory=/boot/efi &> /dev/null \
-      && update-initramfs -c -k all &> /dev/null &> /dev/null \
-      && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
-      && exit"
-  if [ -f ${rootmnt}/etc/fstab.org ]; then
-    mv ${rootmnt}/etc/fstab.org ${rootmnt}/etc/fstab
-  fi
-  umount ${rootmnt}/sys
-  umount ${rootmnt}/proc
-  umount ${rootmnt}/dev
-  cd /
+    # Zabezpieczenie istniejącego fstab przed nadpisaniem
+    if [ -f ${rootmnt}/etc/fstab ]; then
+      mv ${rootmnt}/etc/fstab ${rootmnt}/etc/fstab.org
+    fi
+    cp ${BOCMDIR}/fstab ${rootmnt}/etc/fstab
+    mount -o bind /dev ${rootmnt}/dev
+    mount -o bind /proc ${rootmnt}/proc
+    mount -o bind /sys ${rootmnt}/sys
+    change_kernelparams ${rootmnt}/etc/default/grub
+    chroot ${rootmnt} /bin/bash -c " \
+        sed -i -e 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
+        && update-grub &> /dev/null \
+        && grub-install --efi-directory=/boot/efi &> /dev/null \
+        && update-initramfs -c -k all &> /dev/null &> /dev/null \
+        && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
+        && exit"
+    if [ -f ${rootmnt}/etc/fstab.org ]; then
+      mv ${rootmnt}/etc/fstab.org ${rootmnt}/etc/fstab
+    fi
+    umount ${rootmnt}/sys
+    umount ${rootmnt}/proc
+    umount ${rootmnt}/dev
+    cd /
   log_end_msg
 
   
@@ -804,6 +797,6 @@ bocm_bottom() {
   ln -sf /run/systemd/resolve/stub-resolv.conf ${rootmnt}/etc/resolv.conf
   log_end_msg
 
-  umountAll ${rootmnt} ${_PARTITIONS_FILE}
+  umountAll ${rootmnt} ${VOLUMES_FILE}
   mount -o remount,ro ${rootmnt} || panic "could not remount ro ${rootmnt}"
 }

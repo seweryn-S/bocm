@@ -46,12 +46,6 @@ copy_exec /usr/bin/rsync /bin
 copy_exec /sbin/fsck
 copy_exec /sbin/logsave
 
-copy_exec /usr/bin/head	/bin
-copy_exec /usr/bin/md5sum /bin
-
-copy_exec /bin/dd /bin
-copy_exec /usr/bin/find /usr/bin/find
-
 copy_exec /sbin/vconfig
 
 # Dodane po to by dzialal dns
@@ -64,9 +58,13 @@ do
 done
 
 copy_exec /bin/tar /bin
-copy_exec /usr/bin/wget /usr/bin/wget
+#copy_exec /usr/bin/wget /usr/bin/wget
 copy_exec /bin/bash /bin/bash
-copy_exec /usr/bin/ssh /usr/bin/ssh
+#copy_exec /usr/bin/ssh /usr/bin/ssh
+copy_exec /usr/bin/pv /bin/pv
+copy_exec /rclone/rclone /bin/rclone
+
+copy_file RCLONE_CONF /etc/bocm/rclone.conf 
 
 # Kopiowanie klucza dostepowego do boipxe
 copy_file BOCM_key /etc/bocm/boipxe_rsa

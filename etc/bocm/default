@@ -5,3 +5,5 @@ export VOLUMES_FILE=${BOCMDIR}/partitions.yml
 export MANUAL_DISK_MANAGE="no"
 
 export SGDISK=/sbin/sgdisk
+
+export INITRD_CONF_PATH=/initrd.conf

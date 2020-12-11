@@ -17,7 +17,7 @@ esac
 . /scripts/functions
 
 # Jezeli nie ma wskazanej sciezki MFS-a to nic nie rob
-if [ "x${IPXEHTTP}" = 'x' ]; then
+if [ "x${IMG_URI}" = 'x' ]; then
   exit 0
 fi
 

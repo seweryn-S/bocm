@@ -21,7 +21,7 @@ exit
 :disk_info
 set TEMPLATE ubuntu18.04dev
 set PARAMS disk_info
-goto ububoot
+goto base
 
 :ubuntu1804_mv
 set TEMPLATE ubuntu18.04

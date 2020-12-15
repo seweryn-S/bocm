@@ -654,7 +654,7 @@ override_initrd_scripts() {
   if [[ "x${IMG_URI}" != 'x' ]]; then
     log_begin_msg "Download configuration initrd from CFG:${CFG_PATH}/${INITRD_CONF_PATH}"
       echo -ne "\n"
-      /bin/rclone --config ${BOCMDIR}/rclone.conf copy --no-check-dest -L CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ / || panic "Configuration ${CFG_PATH} download error!"
+      /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate copy --no-check-dest -L CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ / || panic "Configuration ${CFG_PATH} download error!"
     log_end_msg
   fi
 }
@@ -676,6 +676,9 @@ bocm_top() {
   if [ "x${IMG_URI}" = 'x' ]; then
     return 1 
   fi
+  udevadm trigger
+  log_warning_msg "Waiting for UDEV 3[sek]..."
+  sleep 3
 
   # Ustawiona zmienna DISK_INFO, przydatny przy pierwszym starcie gdy nie znamy dysku do bootowania
   if [ "x${DISK_INFO}" = 'xy' ]; then
@@ -749,9 +752,9 @@ bocm_bottom() {
   log_begin_msg "Downloading system image from IMG:${IMG_PATH}"
     printf "\n"
     local _originalsize=""
-    _originalsize=$(/bin/rclone --config ${BOCMDIR}/rclone.conf size IMG:${IMG_PATH} --json|sed -E 's/\{"([a-z]+)":([0-9]+)\,"([a-z]+)":([0-9]+)\}/\4/g')
+    _originalsize=$(/bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate size IMG:${IMG_PATH} --json|sed -E 's/\{"([a-z]+)":([0-9]+)\,"([a-z]+)":([0-9]+)\}/\4/g')
     cd ${rootmnt} || panic "Error! I can't change directory to ${rootmnt}"
-    /bin/rclone --config ${BOCMDIR}/rclone.conf cat IMG:${IMG_PATH} | pv -s ${_originalsize} | tar -xzf -
+    /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${_originalsize} | tar -xzf -
     # Skasowanie pozostałości środowiska przygotowania szablinu docker
     if [ -f .dockerenv ]; then
       rm -rf .dockerenv
@@ -761,7 +764,7 @@ bocm_bottom() {
 
   log_begin_msg "Download configuration from CFG:${CFG_PATH}/"
     printf "\n"
-    /bin/rclone --config ${BOCMDIR}/rclone.conf copy --no-check-dest -L --exclude=boot.ipxe --exclude=.git/** --exclude=initrd.conf/** CFG:${CFG_PATH}/ ${rootmnt}/
+    /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate copy --no-check-dest -L --exclude=boot.ipxe --exclude=.git/** --exclude=initrd.conf/** CFG:${CFG_PATH}/ ${rootmnt}/
   log_end_msg
 
   log_begin_msg "Installing bootloader, rebuild initramfs"
@@ -774,12 +777,17 @@ bocm_bottom() {
     mount -o bind /proc ${rootmnt}/proc
     mount -o bind /sys ${rootmnt}/sys
     change_kernelparams ${rootmnt}/etc/default/grub
+    # chroot ${rootmnt} /bin/bash -c " \
+    #     sed -i -e 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
+    #     && update-grub &> /dev/null \
+    #     && grub-install --efi-directory=/boot/efi &> /dev/null \
+    #     && update-initramfs -c -k all &> /dev/null &> /dev/null \
+    #     && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
+    #     && exit"
     chroot ${rootmnt} /bin/bash -c " \
-        sed -i -e 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
         && update-grub &> /dev/null \
         && grub-install --efi-directory=/boot/efi &> /dev/null \
         && update-initramfs -c -k all &> /dev/null &> /dev/null \
-        && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
         && exit"
     if [ -f ${rootmnt}/etc/fstab.org ]; then
       mv ${rootmnt}/etc/fstab.org ${rootmnt}/etc/fstab

@@ -3,8 +3,8 @@ conf:
   # Mozliwe dwie formy definiowania dyskow,
   # krotka - wygodna w uzyciu ale jesli dyski zmieniaja swoja kolejnosc podczas startu to zle dziala
   # dluga - malo wygodna ale odporna na zmiany kolejnosci dyskow miedzy restartami
-  #diskdev: /dev/sda
-  diskdev: /dev/disk/by-path/pci-0000:03:00.0-nvme-1
+  diskdev: /dev/sda
+  #diskdev: /dev/disk/by-path/pci-0000:03:00.0-nvme-1
 
 # Typ partycji to numer kodowy zgodny z typami partycji wyswietlanymi przez polecenie sgdisk -L
 # Obsługiwane typy systemów plików: 

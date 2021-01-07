@@ -785,7 +785,7 @@ bocm_bottom() {
     #     && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
     #     && exit"
     chroot ${rootmnt} /bin/bash -c " \
-        && update-grub &> /dev/null \
+        update-grub &> /dev/null \
         && grub-install --efi-directory=/boot/efi &> /dev/null \
         && update-initramfs -c -k all &> /dev/null &> /dev/null \
         && exit"

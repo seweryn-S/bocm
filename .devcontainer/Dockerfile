@@ -13,8 +13,9 @@ RUN apt-get update && \
     vim \
     coreutils \
     less \
+    ca-certificates \
     git
-
+    
 # Network tools
 RUN apt-get install -y --no-install-recommends \
     isc-dhcp-client \

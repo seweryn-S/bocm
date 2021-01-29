@@ -42,6 +42,10 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
     initramfs-tools
 
+# Bash language server
+RUN apt-get install -y nodejs npm && \
+    npm i -g bash-language-server
+
 ADD .devcontainer/bootstrap.sh /bootstrap.sh
 
 ENTRYPOINT ["/bin/bash", "/bootstrap.sh"]

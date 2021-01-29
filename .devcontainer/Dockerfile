@@ -42,5 +42,9 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
     initramfs-tools
 
+ADD .devcontainer/bootstrap.sh /bootstrap.sh
+
+ENTRYPOINT ["/bin/bash", "/bootstrap.sh"]
+
 #CMD cd /home/Projekty/conf; ./mntconf; cd /home/Projekty/; /bin/bash; cd /home/Projekty/conf; ./umntconf
 #CMD /bin/bash

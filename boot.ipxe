@@ -1,5 +1,20 @@
 #!ipxe
 
+# Mozliwe parametry i ich znaczenie
+# img_uri - URL wskazujacy na obraz systemu, wraz z plikiem obrazu
+# cfg_uri - URL wskazujacy na katalog z konfiguracja systemu
+# make_volumes - czysci dysk wskazany jako startory w partition.yml, oraz tworzy od nowa cala strukture
+# disk_info - automatycznie wywoluje funkcje disk_info wyswietlajaco informacje o zainstalowanych dyskach
+#
+# break - parametr sluzacy do awaryjnego tymczasowego zatrzymania przetwarzania skryptow w danym momencie
+# Mozliwe wartosci parametru break, sluzace do diagnostyki
+#   before_net_config
+#   after_net_config
+#   before_bocm_top
+#   before_user_bottom
+#   after_user_bottom
+#   end
+
 menu iPXE boot menu
 item --gap -- ---------------- Oparating systems ----------------
 item hdd        Boot from next devices
@@ -25,7 +40,7 @@ goto base
 
 :ubuntu1804_mv
 set TEMPLATE ubuntu18.04
-set PARAMS break=end make_volumes
+set PARAMS make_volumes
 goto base
 
 :ubuntu1804dev_mv

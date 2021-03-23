@@ -55,9 +55,9 @@ goto base
 
 :base
 set BOCMDIR ${dhcp-server}/templates/bocm-v1.0.0-dev
-set BASE ${dhcp-server}/templates/${TEMPLATE}/${TEMPLATE}.tgz
-set CFG ${dhcp-server}/templates/CONFIGS/${hostname}
-set KERNEL_PARAMS loglevel=3 initrd=initrd.img net.ifnames=0 biosdevname=0 ipv6.disable=1 ip=dhcp rw -- img_uri=${BASE} cfg_uri=${CFG} ${PARAMS}
+set IMG_URI ${dhcp-server}/templates/${TEMPLATE}/${TEMPLATE}.tgz
+set CFG_URI ${dhcp-server}/templates/CONFIGS/${hostname}
+set KERNEL_PARAMS loglevel=3 initrd=initrd.img net.ifnames=0 biosdevname=0 ipv6.disable=1 ip=dhcp rw -- img_uri=${IMG_URI} cfg_uri=${CFG_URI} ${PARAMS}
 goto ububoot    
 
 :ububoot

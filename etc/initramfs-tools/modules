@@ -3,3 +3,4 @@ dm_raid
 ixgbe
 nfsv3
 8021q
+vmxnet3

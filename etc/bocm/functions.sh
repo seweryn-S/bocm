@@ -652,9 +652,14 @@ override_initrd_scripts() {
 
   # Jezeli zmienna zdefiniowana
   if [[ "x${IMG_URI}" != 'x' ]]; then
+    # Czy konfiguracja istnieje 
     log_begin_msg "Download configuration initrd from CFG:${CFG_PATH}/${INITRD_CONF_PATH}"
-      echo -ne "\n"
-      /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate copy --no-check-dest -L CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ / || panic "Configuration ${CFG_PATH} download error!"
+      if /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate ls CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ > /dev/null; then
+        echo -ne "\n"
+        /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate copy --no-check-dest -L CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ / || panic "Configuration ${CFG_PATH} download error!"
+      else
+        log_warning_msg "Download configuration error!"
+      fi
     log_end_msg
   fi
 }

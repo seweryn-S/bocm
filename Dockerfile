@@ -32,9 +32,10 @@ RUN apt-get install -y --no-install-recommends \
 
 # Install Rclone, oraz niezbenych narzedzi
 # // TODO: Dopisac kompilację i optymalizację. Wycięcie niepotrzebnych chmur i komend.
+ENV RCLONE_VER=v1.56.0
 RUN apt-get install -y unzip pv && \
-    wget --no-check-certificate https://downloads.rclone.org/v1.53.3/rclone-v1.53.3-linux-amd64.zip && \
-    unzip rclone-v1.53.3-linux-amd64.zip && mv rclone-v1.53.3-linux-amd64 rclone
+    wget --no-check-certificate https://downloads.rclone.org/${RCLONE_VER}/rclone-${RCLONE_VER}-linux-amd64.zip && \
+    unzip rclone-${RCLONE_VER}-linux-amd64.zip && mv rclone-${RCLONE_VER}-linux-amd64 rclone
 
 # Disk_info
 RUN cd /usr/local/sbin/; wget --no-check-certificate https://raw.githubusercontent.com/bockpl/ubuntu18.04src/master/bin/disk_info; chmod +x disk_info; cd /

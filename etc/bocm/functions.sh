@@ -235,8 +235,8 @@ cleanDisk() {
   if echo ${_devDisk}|grep -q "nvme"; then _PART_SYMBOL='p'; fi
   local _DISK=''
   _DISK=${_devDisk#/dev/}${_PART_SYMBOL}
-  for (( P=1; P<=$(grep -q "${_DISK}[1-9]" /proc/partitions); P++)); do
-    wipefs -a -f -q ${P} >> ${_logfile} 2>&1
+  for (( P=1; P<=$(grep -c "${_DISK}[1-9]" /proc/partitions); P++)); do
+    wipefs -a -f -q ${_devDisk}${_PART_SYMBOL}${P} >> ${_logfile} 2>&1
   done
 
   # shellcheck disable=SC2129

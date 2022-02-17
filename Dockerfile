@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 #Maintainer is deprecated 
 LABEL authors="seweryn.sitarski@p.lodz.pl"
@@ -13,11 +13,12 @@ RUN apt -y update && \
     apt -y install linux-image-generic
 
 # Base tools
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update; apt-get install -y --no-install-recommends \
     openssh-server \
     vim \
     coreutils \
-    policykit-1 
+    policykit-1 \
+    less
 
 # Disk tools
 RUN apt-get install -y --no-install-recommends \  
@@ -29,6 +30,10 @@ RUN apt-get install -y --no-install-recommends \
     ifenslave \
     vlan \
     wget
+
+# PCI tools
+RUN apt-get install -y --no-install-recommends \
+    pciutils
 
 # Install Rclone, oraz niezbenych narzedzi
 # // TODO: Dopisac kompilację i optymalizację. Wycięcie niepotrzebnych chmur i komend.

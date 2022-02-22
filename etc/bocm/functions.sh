@@ -64,7 +64,7 @@ failure(){
 
     _output_array+=('---')
     printf '%s\n' "${_output_array[@]}" >&2
-    exit ${_code}
+    return ${_code}
 }
 
 trap 'failure "LINENO" "BASH_LINENO" "${BASH_COMMAND}" "${?}"' ERR
@@ -741,6 +741,7 @@ bocm_top() {
 }
 
 bocm_bottom() {
+  local _logfile=${LOGFILE:-/logfile.log}
   local rootmnt=${rootmnt}
 
   [ "x$init" = "x" ] && (
@@ -798,11 +799,13 @@ bocm_bottom() {
     #     && update-initramfs -c -k all &> /dev/null &> /dev/null \
     #     && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
     #     && exit"
-    chroot ${rootmnt} /bin/bash -c " \
-        update-grub &> /dev/null \
-        && grub-install --efi-directory=/boot/efi &> /dev/null \
-        && update-initramfs -c -k all &> /dev/null &> /dev/null \
-        && exit"
+    chroot ${rootmnt} /bin/bash -c "\
+update-grub &> /dev/null \
+&& mount -t efivarfs none /sys/firmware/efi/efivars \
+&& grub-install --efi-directory=/boot/efi &> /dev/null \
+&& umount /sys/firmware/efi/efivars \
+&& update-initramfs -c -k all &> /dev/null &> /dev/null \
+&& exit"
     if [ -f ${rootmnt}/etc/fstab.org ]; then
       mv ${rootmnt}/etc/fstab.org ${rootmnt}/etc/fstab
     fi

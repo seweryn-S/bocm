@@ -36,7 +36,7 @@ ip link set eth0 down
 maybe_break end
 
 # Obejscie w celu pozbycia sie domyslnego adresu ip przez DHCP, dodatkowo chodzi o wyczyszczenie opcji /proc/cmdline uruchomionego kernela
-reboot
+reboot -f
 
 exit 0
 

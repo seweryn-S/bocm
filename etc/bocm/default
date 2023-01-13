@@ -1,6 +1,9 @@
 # File with default volumes
 export VOLUMES_FILE=${BOCMDIR}/partitions.yml
 
+# Plik wykonywany jako ostatni krok po rozpakowaniu obrazu systemu
+export PRE_BOOT_FILE=/etc/pre_boot
+
 # Manual disk menagement
 export MANUAL_DISK_MANAGE="no"
 

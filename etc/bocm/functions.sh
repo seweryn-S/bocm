@@ -788,9 +788,13 @@ bocm_bottom() {
       mv ${rootmnt}/etc/fstab ${rootmnt}/etc/fstab.org
     fi
     cp ${BOCMDIR}/fstab ${rootmnt}/etc/fstab
-    mount -o bind /dev ${rootmnt}/dev
-    mount -o bind /proc ${rootmnt}/proc
-    mount -o bind /sys ${rootmnt}/sys
+
+    DIRS="dev proc sys"
+    for D in ${DIRS}; do
+      if ! [ -d ${D} ]; then mkdir ${D}; fi
+      mount -o bind /${D} ${rootmnt}/${D}
+    done
+
     change_kernelparams ${rootmnt}/etc/default/grub
     # chroot ${rootmnt} /bin/bash -c " \
     #     sed -i -e 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
@@ -809,9 +813,11 @@ update-grub &> /dev/null \
     if [ -f ${rootmnt}/etc/fstab.org ]; then
       mv ${rootmnt}/etc/fstab.org ${rootmnt}/etc/fstab
     fi
-    umount ${rootmnt}/sys
-    umount ${rootmnt}/proc
-    umount ${rootmnt}/dev
+
+    for D in ${DIRS}; do
+      unmount ${rootmnt}/${D}
+    done
+
     cd /
   log_end_msg
 

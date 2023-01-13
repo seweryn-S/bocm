@@ -803,13 +803,21 @@ bocm_bottom() {
     #     && update-initramfs -c -k all &> /dev/null &> /dev/null \
     #     && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
     #     && exit"
-    chroot ${rootmnt} /bin/bash -c "\
-update-grub &> /dev/null \
-&& mount -t efivarfs none /sys/firmware/efi/efivars \
-&& grub-install --efi-directory=/boot/efi &> /dev/null \
-&& umount /sys/firmware/efi/efivars \
-&& update-initramfs -c -k all &> /dev/null &> /dev/null \
-&& exit"
+
+    if [ -z ${PRE_BOOT_FILE} ]; then PRE_BOOT_FILE=/etc/pre_boot; fi
+    
+    if [ -x ${rootmnt}${PRE_BOOT_FILE} ]; then
+      chroot ${rootmnt} /bin/bash -c "${PRE_BOOT_FILE}; exit"
+    else
+      chroot ${rootmnt} /bin/bash -c "\
+  update-grub &> /dev/null \
+  && mount -t efivarfs none /sys/firmware/efi/efivars \
+  && grub-install --efi-directory=/boot/efi &> /dev/null \
+  && umount /sys/firmware/efi/efivars \
+  && update-initramfs -c -k all &> /dev/null &> /dev/null \
+  && exit"
+    fi
+
     if [ -f ${rootmnt}/etc/fstab.org ]; then
       mv ${rootmnt}/etc/fstab.org ${rootmnt}/etc/fstab
     fi

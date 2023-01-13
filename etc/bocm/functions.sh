@@ -40,10 +40,6 @@ function handle_exception() {
         "  "
         "***************"
     )
-    # echo "  Function call stack:"
-    # for i in "${func_stack[@]}"; do
-    #     echo "  $i"
-    # done
 
     printf '%s\n' "${_output_array[@]}" >&2
 

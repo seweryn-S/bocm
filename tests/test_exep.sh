@@ -18,7 +18,11 @@ function handle_exception() {
         "   Source line: ${_last_code_line}"
         "       Command: ${_last_command}"
         "   Line number: $_lineno"
+<<<<<<< HEAD
         "Function_trace: [${FUNCNAME[*]:1}] ${BASH_LINENO[*]::$((${#FUNCNAME[@]}-1))}"
+=======
+        "Function_trace: [${FUNCNAME[*]:1}] ${BASH_LINENO[1]}"
+>>>>>>> 7208aed974f6aca3d3289c7dadd7054380df5953
         "     Exit code: ${_code}"
         "  "
         "***************"

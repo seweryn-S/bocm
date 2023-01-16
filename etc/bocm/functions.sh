@@ -29,6 +29,7 @@ function handle_exception() {
     local -a _output_array=()
 
     _output_array+=(
+        "  "
         "*** Exception ***"
         "  "
         "   Source line: ${_last_code_line}"
@@ -343,6 +344,7 @@ makeVolumes() {
     # Tworzenie LV
     if [ ${_return} == 0 ]; then
       for ((v = 0; v < ${#volume__part[@]}; v++)); do
+        _makeFS="false"
         # Parsowanie vgname i lvname z nazwy wolumenu zmienna volume_dev np mapper/vgroot-lvroot
         _lvname=${volume__dev[$v]##*-}
         _vgname=${volume__dev[$v]%%-*}
@@ -783,18 +785,18 @@ bocm_bottom() {
     #     && sed -i -e 's/use_lvmetad = 0/use_lvmetad = 1/g' /etc/lvm/lvm.conf \
     #     && exit"
 
-    if [ -z ${PRE_BOOT_FILE} ]; then PRE_BOOT_FILE=/etc/pre_boot; fi
+    if [ -z ${PRE_BOOT_FILE} ]; then export PRE_BOOT_FILE=/etc/pre_boot; fi
 
-    if [ -x ${rootmnt}${PRE_BOOT_FILE} ]; then
-      chroot ${rootmnt} /bin/bash -c "${PRE_BOOT_FILE}; exit"
+    if [ -f ${rootmnt}${PRE_BOOT_FILE} ]; then
+      chroot ${rootmnt} /bin/bash ${PRE_BOOT_FILE}
     else
       chroot ${rootmnt} /bin/bash -c "\
-  update-grub &> /dev/null \
-  && mount -t efivarfs none /sys/firmware/efi/efivars \
-  && grub-install --efi-directory=/boot/efi &> /dev/null \
-  && umount /sys/firmware/efi/efivars \
-  && update-initramfs -c -k all &> /dev/null &> /dev/null \
-  && exit"
+      update-grub &> /dev/null \
+      && mount -t efivarfs none /sys/firmware/efi/efivars \
+      && grub-install --efi-directory=/boot/efi &> /dev/null \
+      && umount /sys/firmware/efi/efivars \
+      && update-initramfs -c -k all &> /dev/null &> /dev/null \
+      && exit"
     fi
 
     if [ -f ${rootmnt}/etc/fstab.org ]; then
@@ -806,7 +808,7 @@ bocm_bottom() {
     done
 
     cd /
-  log_end_msg
+log_end_msg
 
   
 

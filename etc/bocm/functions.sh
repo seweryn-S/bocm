@@ -427,7 +427,7 @@ makeVolumes() {
             # Jezeli wolumen o podanej nazwie juz istnieje, nic nie rob
             local lv
             lv=$(lvm lvs --noheadings -o lv_name -S vg_name=${_vgname},lv_name=${_lvname}|awk '{ print $1 }')
-            if [ "x$(${lv})" == "x${_lvname}" ]; then
+            if [ "x${lv}" == "x${_lvname}" ]; then
               continue
             fi
             printf "Creating logical volume %s..." "${_lvname}"
@@ -788,7 +788,8 @@ bocm_bottom() {
     if [ -z ${PRE_BOOT_FILE} ]; then export PRE_BOOT_FILE=/etc/pre_boot; fi
 
     if [ -f ${rootmnt}${PRE_BOOT_FILE} ]; then
-      chroot ${rootmnt} /bin/bash ${PRE_BOOT_FILE}
+      chmod +x ${rootmnt}${PRE_BOOT_FILE}
+      chroot ${rootmnt} /bin/bash -c ${PRE_BOOT_FILE}
     else
       chroot ${rootmnt} /bin/bash -c "\
       update-grub &> /dev/null \

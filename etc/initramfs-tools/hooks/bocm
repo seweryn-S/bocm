@@ -59,6 +59,7 @@ do
 done
 
 copy_exec /bin/tar /bin
+copy_exec /usr/bin/zstd /bin
 #copy_exec /usr/bin/wget /usr/bin/wget
 copy_exec /bin/bash /bin/bash
 #copy_exec /usr/bin/ssh /usr/bin/ssh

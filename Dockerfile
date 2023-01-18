@@ -16,6 +16,7 @@ RUN apt -y update && \
 RUN apt-get update; apt-get install -y --no-install-recommends \
     openssh-server \
     vim \
+    zstd \
     coreutils \
     policykit-1 \
     less

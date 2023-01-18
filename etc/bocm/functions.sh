@@ -748,9 +748,17 @@ bocm_bottom() {
   log_begin_msg "Downloading system image from IMG:${IMG_PATH}"
     printf "\n"
     local _originalsize=""
+    local _ext=""
     _originalsize=$(/bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate size IMG:${IMG_PATH} --json|sed -E 's/\{"([a-z]+)":([0-9]+)\,"([a-z]+)":([0-9]+)\}/\4/g')
     cd ${rootmnt} || panic "Error! I can't change directory to ${rootmnt}"
-    /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${_originalsize} | tar -xzf -
+    _ext=${IMG_PATH##*.}
+    if [ "x${_ext}" == "xtgz" ]; then
+      /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${_originalsize} | tar -xzf -
+    elif [ "x${_ext}" == "xtzst" ]; then
+      /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${_originalsize} | tar -I zstd -xf -
+    else
+      panic "Error! I can't recognize file extension of system image ${IMG_PATH}"
+    fi
     # Skasowanie pozostałości środowiska przygotowania szablinu docker
     if [ -f .dockerenv ]; then
       rm -rf .dockerenv
@@ -809,7 +817,7 @@ bocm_bottom() {
     done
 
     cd /
-log_end_msg
+  log_end_msg
 
   
 

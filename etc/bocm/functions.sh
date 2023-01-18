@@ -805,7 +805,7 @@ bocm_bottom() {
     fi
 
     for D in ${DIRS}; do
-      unmount ${rootmnt}/${D}
+      umount ${rootmnt}/${D}
     done
 
     cd /

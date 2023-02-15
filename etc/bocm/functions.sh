@@ -191,6 +191,10 @@ cleanDisk() {
   vgs=$(lvm vgs --noheadings -o vg_name -S pv_name=~"${_devDisk}.*"|awk '{print $1}') 
   for vg in ${vgs}; do
     lvm vgchange -a n ${vg} >> ${_logfile} 2>&1
+    
+    # Sprzatanie uszkodzonych PV
+    lvm vgreduce --removemissing --force ${vg} >> ${_logfile} 2>&1
+
     lvs=$(lvm lvs --noheadings -o lv_path,devices|grep ${_devDisk}|awk '{print $1}')
     for lv in ${lvs}; do
       lvm lvremove -y -ff ${lv} >> ${_logfile} 2>&1
@@ -205,7 +209,6 @@ cleanDisk() {
         lvm vgreduce -y ${vg} ${pv} >> ${_logfile} 2>&1
         lvm pvremove -y -ff ${pv} >> ${_logfile} 2>&1
       done
-      #lvm vgreduce --removemissing --force ${vg} >> ${_logfile} 2>&1
       lvm vgchange -a y ${vg} >> ${_logfile} 2>&1
     fi 
   done
@@ -215,9 +218,11 @@ cleanDisk() {
   if echo ${_devDisk}|grep -q "nvme"; then _PART_SYMBOL='p'; fi
   local _DISK=''
   _DISK=${_devDisk#/dev/}${_PART_SYMBOL}
+  set +E # Zabezpieczenie przez wyjatkiem w przypadku całkiem czystego dysku, gdy grep niczego nie znajduje w pliku partitions
   for (( P=1; P<=$(grep -c "${_DISK}[1-9]" /proc/partitions); P++)); do
     wipefs -a -f -q ${_devDisk}${_PART_SYMBOL}${P} >> ${_logfile} 2>&1
   done
+  set -E
 
   # shellcheck disable=SC2129
   sgdisk -Z ${_devDisk} >> ${_logfile} 2>&1
@@ -772,6 +777,7 @@ bocm_bottom() {
   log_end_msg
 
   log_begin_msg "Installing bootloader, rebuild initramfs"
+    echo ""
     # Zabezpieczenie istniejącego fstab przed nadpisaniem
     if [ -f ${rootmnt}/etc/fstab ]; then
       mv ${rootmnt}/etc/fstab ${rootmnt}/etc/fstab.org
@@ -800,12 +806,11 @@ bocm_bottom() {
       chroot ${rootmnt} /bin/bash -c ${PRE_BOOT_FILE}
     else
       chroot ${rootmnt} /bin/bash -c "\
-      update-grub &> /dev/null \
+      update-grub \
       && mount -t efivarfs none /sys/firmware/efi/efivars \
-      && grub-install --efi-directory=/boot/efi &> /dev/null \
+      && grub-install --efi-directory=/boot/efi \
       && umount /sys/firmware/efi/efivars \
-      && update-initramfs -c -k all &> /dev/null &> /dev/null \
-      && exit"
+      && update-initramfs -c -k all"
     fi
 
     if [ -f ${rootmnt}/etc/fstab.org ]; then

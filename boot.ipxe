@@ -22,14 +22,13 @@
 menu iPXE boot menu
 item --gap -- ---------------- Oparating systems ----------------
 item hdd        Boot from next devices
-item ubuntu1804_mv      Ubuntu18.04:stable - branch master make_volumes
-item ubuntu1804dev_mv   Ubuntu18.04:latest - branch develop make_volumes
-item ubuntu1804dev      Ubuntu18.04:latest - branch develop
+item ubuntu2004   Ubuntu20.04:latest
+item ubuntu2004_mv      Ubuntu20.04:latest - make_volumes break=end
 item disk_info  Disk info
 item --gap -- ---------------- Advanced configuration ----------------
 item shell      Drop to iPXE shell
 item exit       Exit to BIOS boot
-choose --default ubuntu1804dev_mv --timeout 10000 target && goto ${target} || reboot
+choose --default ubuntu2004 --timeout 10000 target && goto ${target} || reboot
 
 :hdd
 # Boot the first local HDD
@@ -42,24 +41,19 @@ set TEMPLATE ubuntu18.04dev
 set PARAMS disk_info
 goto base
 
-:ubuntu1804_mv
-set TEMPLATE ubuntu18.04
-set PARAMS make_volumes
+:ubuntu2004
+set TEMPLATE ubuntu20.04
+set PARAMS
 goto base
 
-:ubuntu1804dev_mv
-set TEMPLATE ubuntu18.04dev
+:ubuntu2004_mv
+set TEMPLATE ubuntu20.04
 set PARAMS break=end make_volumes
-goto base
-
-:ubuntu1804dev
-set TEMPLATE ubuntu18.04dev
-set PARAMS break=before_bocm_top,end
 goto base
 
 :base
 set BOCMDIR ${dhcp-server}/templates/bocm-v1.0.0-dev
-set IMG_URI ${dhcp-server}/templates/${TEMPLATE}/${TEMPLATE}.tgz
+set IMG_URI ${dhcp-server}/templates/${TEMPLATE}/${TEMPLATE}-1.5.0.tgz
 set CFG_URI ${dhcp-server}/templates/CONFIGS/${hostname}
 set KERNEL_PARAMS loglevel=3 initrd=initrd.img net.ifnames=0 biosdevname=0 ipv6.disable=1 ip=dhcp rw -- img_uri=${IMG_URI} cfg_uri=${CFG_URI} ${PARAMS}
 # Jesli zdefiniowana zmienna BOOTIF
@@ -75,6 +69,3 @@ boot
 
 :shell
 shell
-
-:exit
-exit

@@ -34,7 +34,7 @@ function handle_exception() {
         "  "
         "   Source line: ${_last_code_line}"
         "       Command: ${_last_command}"
-        "   Line number: $_lineno"
+        "   Line number: $_lineno $_bash_lineno"
         "Function_trace: [${FUNCNAME[*]:1}] ${BASH_LINENO[*]::$((${#FUNCNAME[@]}-1))}"
 
         "     Exit code: ${_code}"

@@ -11,6 +11,7 @@ for x in $(cat /proc/cmdline); do
                 export IMG_URI="${x#img_uri=}"
                 export IMG_SERVER=$(echo ${IMG_URI}|cut -d '/' -f 1)
                 export IMG_PATH=${IMG_URI#*\/}
+                export IMG_SIZE=0
                 ;;
         cfg_uri*)
                 export CFG_URI="${x#cfg_uri=}"

@@ -676,8 +676,15 @@ bocm_top() {
 
   # Jezeli nie ma synchronizacji nic nie rob
   if [ "x${IMG_URI}" = 'x' ]; then
-    return 1 
+    return 1
+  else
+    # Sprawdz czy obraz systemu jest dostepny ijego rozmiar jest rozny od zera
+    IMG_SIZE=$(/bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate ls IMG:${IMG_PATH} 2> /dev/null | awk '{print $1}')
+    if [ "x${IMG_SIZE}" = "x" ]; then
+      panic "The size of the system image is 0, or the image is unavailable!"
+    fi
   fi
+
   udevadm trigger
   log_warning_msg "Waiting for UDEV 3[sek]..."
   sleep 3
@@ -754,15 +761,13 @@ bocm_bottom() {
 
   log_begin_msg "Downloading system image from IMG:${IMG_PATH}"
     printf "\n"
-    local _originalsize=""
     local _ext=""
-    _originalsize=$(/bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate size IMG:${IMG_PATH} --json|sed -E 's/\{"([a-z]+)":([0-9]+)\,"([a-z]+)":([0-9]+)\}/\4/g')
     cd ${rootmnt} || panic "Error! I can't change directory to ${rootmnt}"
     _ext=${IMG_PATH##*.}
     if [ "x${_ext}" == "xtgz" ]; then
-      /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${_originalsize} | tar -xzf -
+      /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | tar -xzf -
     elif [ "x${_ext}" == "xtzst" ]; then
-      /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${_originalsize} | tar -I zstd -xf -
+      /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | tar -I zstd -xf -
     else
       panic "Error! I can't recognize file extension of system image ${IMG_PATH}"
     fi

@@ -1,6 +1,8 @@
 #!/bin/bash
 # shellcheck disable=SC2086
 
+# Przerobic funkcje by wyswietlala liste filtrujac tresc skryptu
+# grep -o ".*() " etc/bocm/functions.sh|grep -v ^_.*
 if [[ $0 =~ ^.*functions.sh$ ]]; then
   cat <<EOF
 Lista funkcji:
@@ -19,7 +21,7 @@ EOF
 fi
 
 set -E
-function handle_exception() {
+handle_exception() {
     local _lineno="${1:-LINENO}"
     local _bash_lineno="${2:-BASH_LINENO}"
     local _last_code_line="${3}"

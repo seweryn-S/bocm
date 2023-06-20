@@ -158,9 +158,11 @@ _getDiskName() {
 
 # Funkcja zwraca wielkosc pamieci RAM w GB (np. 4)
 _getMemorySize() {
-  local RESULT="0"
-  RESULT=$(awk '/MemTotal/{printf("%.2f\n", $2 / 1024)}' </proc/meminfo)
-  echo -e "$RESULT"
+  local _result="0"
+
+  _result=$(awk '/MemTotal/{printf("%.2f\n", $2 / 1024)}' </proc/meminfo)
+  
+  printf "%s" "${_result}}"
 }
 
 # Funkcja zwraca ilosc dostepnych do zagospodarowania dyskow

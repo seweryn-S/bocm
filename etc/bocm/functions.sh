@@ -1,6 +1,9 @@
 #!/bin/bash
 # shellcheck disable=SC2086
 
+# shellcheck disable=SC1090
+source ${BOCMDIR}/bash-yaml/script/yaml.sh
+
 # Przerobic funkcje by wyswietlala liste filtrujac tresc skryptu
 # grep -o ".*() " etc/bocm/functions.sh|grep -v ^_.*
 if [[ $0 =~ ^.*functions.sh$ ]]; then
@@ -128,10 +131,7 @@ _getDiskName() {
   local _devName=""
   local _volFile=${1:-${VOLUMES_FILE}}
 
-  if [ -f ${_volFile} ]; then
-    # shellcheck disable=SC1090
-    source ${BOCMDIR}/bash-yaml/script/yaml.sh
-
+  if [ -f "${_volFile}" ]; then
     create_variables "${_volFile}"
     # shellcheck disable=SC2154
     _devID=${conf_diskdev}
@@ -141,9 +141,9 @@ _getDiskName() {
   fi
 
   # Jezeli _devID nie jest krotka nazwa /dev/sdX lub /dev/nvmeXnX
-  if ! echo ${_devID}|grep -qE '\/dev\/sd[a-z]|\/dev\/nvme[0-9]n[0-9]'; then
+  if ! echo "${_devID}"|grep -qE '\/dev\/sd[a-z]|\/dev\/nvme[0-9]n[0-9]'; then
     _devName=/dev/$(udevadm info -q name "${_devID}")
-    if ! [ -b ${_devName} ]; then
+    if ! [ -b "${_devName}" ]; then
       panic "Bad boot device ${_devID}"
       exit 1
     fi
@@ -253,9 +253,6 @@ makeStdPartition() {
   _SEC_SIZE=$(lsblk --nodeps -no phy-sec ${_devDisk}|awk '{print $1}' || echo 4096)
 
   if [ "x${_partfile}" != 'x' ] && [ -f ${_partfile} ]; then
-    # shellcheck disable=SC1090
-    source ${BOCMDIR}/bash-yaml/script/yaml.sh
-
     create_variables "${_partfile}"
 
   # shellcheck disable=2154
@@ -307,9 +304,6 @@ makeVolumes() {
   _SEC_SIZE=$(lsblk --nodeps -no phy-sec ${_devDisk}|awk '{print $1}' || echo 4096)
 
   if [ "x${_volFile}" != 'x' ] && [ -f ${_volFile} ]; then
-    # shellcheck disable=SC1090
-    source ${BOCMDIR}/bash-yaml/script/yaml.sh
-
     create_variables "${_volFile}"
 
   # shellcheck disable=SC2154
@@ -500,9 +494,6 @@ mountAll() {
   printf "%s begin\n" "${FUNCNAME[0]}" >> ${_logfile}
 
   if [ "x${_volFile}" != 'x' ] && [ -f ${_volFile} ]; then
-    # shellcheck disable=1090
-    source ${BOCMDIR}/bash-yaml/script/yaml.sh
-
     create_variables "${_volFile}"
 
     # shellcheck disable=2154
@@ -568,9 +559,6 @@ umountAll() {
   printf "%s begin\n" "${FUNCNAME[0]}" >> ${_logfile}
 
   if [ "x${_volFile}" != 'x' ] && [ -f ${_volFile} ]; then
-    # shellcheck disable=SC1090
-    source ${BOCMDIR}/bash-yaml/script/yaml.sh
-
     create_variables "${_volFile}"
 
     # Odmontowanie wolumenow LVM

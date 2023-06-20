@@ -22,11 +22,11 @@ fi
 
 set -E
 handle_exception() {
-    local _lineno="${1:-LINENO}"
-    local _bash_lineno="${2:-BASH_LINENO}"
-    local _last_code_line="${3}"
-    local _last_command="${4}"
-    local _code="${5}"
+    local _lineno=${1:-LINENO}
+    local _bash_lineno=${2:-BASH_LINENO}
+    local _last_code_line=${3}
+    local _last_command=${4}
+    local _code=${5}
 
     local -a _output_array=()
 

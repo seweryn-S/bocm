@@ -175,66 +175,174 @@ _getDiskCount() {
   printf "%s" "${_result}"
 }
 
-# Czyszczenie dysku, wymazuje wszystko bez pytania
-# Parametry:
-#   _devDisk - sciezka urzadzenia blokowego dysku
-# Wynik:
-#   numer_bledu - w przypadku wystapienia dowolnego bledu
-cleanDisk() {
-  local _return=0
-  #local _logfile=${LOGFILE:-/dev/null}
-  local _logfile=${LOGFILE:-/logfile.log}
-  local _devDisk=$1
+# Wewnętrzna funkcja do usuwania woluminow logicznych (LV)
+_remove_lv() {
+  local lv=$1
+  local _logfile=$2
+  # Usuwa LV bez potwierdzenia "-y" i wymusza operacje "-ff"
+  lvm lvremove -y -ff ${lv} >> ${_logfile} 2>&1
+}
 
-  local vgs=""
-  local pvs=""
-  local lvs=""
+# Wewnętrzna funkcja do czyszczenia pozostalych woluminow fizycznych (PV)
+_clean_remaining_pv() {
+  local vg=$1
+  local _devDisk=$2
+  local _logfile=$3
+  local pv
+  local pvs
 
-  printf "%s begin\n" "${FUNCNAME[0]}" >> ${_logfile}
-
-  vgs=$(lvm vgs --noheadings -o vg_name -S pv_name=~"${_devDisk}.*"|awk '{print $1}') 
-  for vg in ${vgs}; do
-    lvm vgchange -a n ${vg} >> ${_logfile} 2>&1
-    
-    # Sprzatanie uszkodzonych PV
-    lvm vgreduce --removemissing --force ${vg} >> ${_logfile} 2>&1
-
-    lvs=$(lvm lvs --noheadings -o lv_path,devices|grep ${_devDisk}|awk '{print $1}')
-    for lv in ${lvs}; do
-      lvm lvremove -y -ff ${lv} >> ${_logfile} 2>&1
+  # Sprawdz, czy to jest ostatni dysk w vg
+  if [ "$(lvm pvs --noheadings -o pv_name -S vg_name=${vg}|wc -l)" = 1 ]; then
+    # Usun VG bez potwierdzenia "-y" i wymusza operacje "-f"
+    lvm vgremove -y -f ${vg} >> ${_logfile} 2>&1
+  else
+    # Pobierz wszystkie PV, ktore sa na naszym dysku
+    pvs=$(lvm pvs --noheadings -o pv_name -S pv_name=~"${_devDisk}.*"|awk '{print $1}')
+    for pv in ${pvs}; do
+      # Usun PV z VG
+      lvm vgreduce -y ${vg} ${pv} >> ${_logfile} 2>&1
+      # Usun PV bez potwierdzenia "-y" i wymusza operacje "-ff"
+      lvm pvremove -y -ff ${pv} >> ${_logfile} 2>&1
     done
-    # Jezeli to ostatni dysk w vg
-    if [ "$(lvm pvs --noheadings -o pv_name -S vg_name=${vg}|wc -l)" = 1 ]; then
-      lvm vgremove -y -f ${vg} >> ${_logfile} 2>&1
-      continue
-    else
-      pvs=$(lvm pvs --noheadings -o pv_name -S pv_name=~"${_devDisk}.*"|awk '{print $1}')
-      for pv in ${pvs}; do
-        lvm vgreduce -y ${vg} ${pv} >> ${_logfile} 2>&1
-        lvm pvremove -y -ff ${pv} >> ${_logfile} 2>&1
-      done
-      lvm vgchange -a y ${vg} >> ${_logfile} 2>&1
-    fi 
+    # Aktywuj VG ponownie
+    lvm vgchange -a y ${vg} >> ${_logfile} 2>&1
+  fi
+}
+
+# Wewnętrzna funkcja do czyszczenia grup woluminow (VG)
+_clean_vg() {
+  local vg=$1
+  local _devDisk=$2
+  local _logfile=$3
+  local lv
+  local lvs
+  local pv
+
+  # Deaktywuj vg
+  lvm vgchange -a n ${vg} >> ${_logfile} 2>&1
+  # Usuń uszkodzone PV z VG
+  lvm vgreduce --removemissing --force ${vg} >> ${_logfile} 2>&1
+
+  # Pobierz wszystkie LV w VG
+  lvs=$(lvm lvs --noheadings -o lv_name ${vg} | awk '{print $1}')
+
+  # Usun LV, jesli jest mirrorowany na naszym dysku
+  for lv in ${lvs}; do
+    IFS=$'\n'
+    for pv in $(lvm pvs -v --segments -o+lv_name | grep ${lv} | awk '{print $1}'); do
+      if echo ${pv} | grep -q ${_devDisk}; then
+        _remove_lv ${vg}/${lv} ${_logfile}
+        break
+      fi  
+    done
+    unset IFS
   done
-  # Czyscimy dysk
-  # Czyszczenie sygnatur na wszystkich istniejacych partycjach
+
+  # Przetworz pozostale woluminy fizyczne (PV)
+  _clean_remaining_pv "${vg}" "${_devDisk}" "${_logfile}"
+}
+
+# Wewnętrzna funkcja do czyszczenia partycji na dysku
+_clean_disk() {
+  local _devDisk=$1
+  local _logfile=$2
   local _PART_SYMBOL=''
-  if echo ${_devDisk}|grep -q "nvme"; then _PART_SYMBOL='p'; fi
   local _DISK=''
+
+  if echo ${_devDisk}|grep -q "nvme"; then _PART_SYMBOL='p'; fi
   _DISK=${_devDisk#/dev/}${_PART_SYMBOL}
-  set +E # Zabezpieczenie przez wyjatkiem w przypadku całkiem czystego dysku, gdy grep niczego nie znajduje w pliku partitions
+
+  set +E # Zabezpieczenie przed wyjatkiem w przypadku całkiem czystego dysku, gdy grep niczego nie znajduje w pliku partitions
   for (( P=1; P<=$(grep -c "${_DISK}[1-9]" /proc/partitions); P++)); do
     wipefs -a -f -q ${_devDisk}${_PART_SYMBOL}${P} >> ${_logfile} 2>&1
   done
   set -E
 
-  # shellcheck disable=SC2129
   sgdisk -Z ${_devDisk} >> ${_logfile} 2>&1
   /sbin/partprobe ${_devDisk} >> ${_logfile} 2>&1
+}
+
+# Glowna funkcja czyszczaca dysk
+cleanDisk() {
+  local _return=0
+  local _logfile=${LOGFILE:-/logfile.log}
+  local _devDisk=$1
+  local vg
+  local vgs
+
+  printf "%s begin\n" "${FUNCNAME[0]}" >> ${_logfile}
+
+  vgs=$(lvm vgs --noheadings -o vg_name -S pv_name=~"${_devDisk}.*"|awk '{print $1}') 
+  for vg in ${vgs}; do
+    _clean_vg "${vg}" "${_devDisk}" "${_logfile}"
+  done
+
+  _clean_disk ${_devDisk} ${_logfile}
 
   printf "%s end\n\n" "${FUNCNAME[0]}" >> ${_logfile}
   return ${_return}
 }
+
+# # Czyszczenie dysku, wymazuje wszystko bez pytania
+# # Parametry:
+# #   _devDisk - sciezka urzadzenia blokowego dysku
+# # Wynik:
+# #   numer_bledu - w przypadku wystapienia dowolnego bledu
+# cleanDisk() {
+#   local _return=0
+#   #local _logfile=${LOGFILE:-/dev/null}
+#   local _logfile=${LOGFILE:-/logfile.log}
+#   local _devDisk=$1
+
+#   local vgs=""
+#   local pvs=""
+#   local lvs=""
+
+#   printf "%s begin\n" "${FUNCNAME[0]}" >> ${_logfile}
+
+#   vgs=$(lvm vgs --noheadings -o vg_name -S pv_name=~"${_devDisk}.*"|awk '{print $1}') 
+#   for vg in ${vgs}; do
+#     lvm vgchange -a n ${vg} >> ${_logfile} 2>&1
+    
+#     # Sprzatanie uszkodzonych PV
+#     lvm vgreduce --removemissing --force ${vg} >> ${_logfile} 2>&1
+
+#     lvs=$(lvm lvs --noheadings -o lv_path,devices|grep ${_devDisk}|awk '{print $1}')
+#     for lv in ${lvs}; do
+#       lvm lvremove -y -ff ${lv} >> ${_logfile} 2>&1
+#     done
+#     # Jezeli to ostatni dysk w vg
+#     if [ "$(lvm pvs --noheadings -o pv_name -S vg_name=${vg}|wc -l)" = 1 ]; then
+#       lvm vgremove -y -f ${vg} >> ${_logfile} 2>&1
+#       continue
+#     else
+#       pvs=$(lvm pvs --noheadings -o pv_name -S pv_name=~"${_devDisk}.*"|awk '{print $1}')
+#       for pv in ${pvs}; do
+#         lvm vgreduce -y ${vg} ${pv} >> ${_logfile} 2>&1
+#         lvm pvremove -y -ff ${pv} >> ${_logfile} 2>&1
+#       done
+#       lvm vgchange -a y ${vg} >> ${_logfile} 2>&1
+#     fi 
+#   done
+#   # Czyscimy dysk
+#   # Czyszczenie sygnatur na wszystkich istniejacych partycjach
+#   local _PART_SYMBOL=''
+#   if echo ${_devDisk}|grep -q "nvme"; then _PART_SYMBOL='p'; fi
+#   local _DISK=''
+#   _DISK=${_devDisk#/dev/}${_PART_SYMBOL}
+#   set +E # Zabezpieczenie przez wyjatkiem w przypadku całkiem czystego dysku, gdy grep niczego nie znajduje w pliku partitions
+#   for (( P=1; P<=$(grep -c "${_DISK}[1-9]" /proc/partitions); P++)); do
+#     wipefs -a -f -q ${_devDisk}${_PART_SYMBOL}${P} >> ${_logfile} 2>&1
+#   done
+#   set -E
+
+#   # shellcheck disable=SC2129
+#   sgdisk -Z ${_devDisk} >> ${_logfile} 2>&1
+#   /sbin/partprobe ${_devDisk} >> ${_logfile} 2>&1
+
+#   printf "%s end\n\n" "${FUNCNAME[0]}" >> ${_logfile}
+#   return ${_return}
+# }
 
 # Tworzenie standardowego schematu podzialu dysku na partycje
 # Parametry:

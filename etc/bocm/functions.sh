@@ -52,7 +52,7 @@ handle_exception() {
     [[ $(type -t panic) == function ]] && panic || exit ${_code}
 }
 
-trap 'handle_exception "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" "$(eval echo ${BASH_COMMAND})" "${?}"' ERR
+trap 'handle_exception "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" "$(eval echo "${BASH_COMMAND}")" "${?}"' ERR
 
 
 # Load default, then allow override.

@@ -252,11 +252,9 @@ _clean_disk() {
   if echo ${_devDisk}|grep -q "nvme"; then _PART_SYMBOL='p'; fi
   _DISK=${_devDisk#/dev/}${_PART_SYMBOL}
 
-  set +E # Zabezpieczenie przed wyjatkiem w przypadku całkiem czystego dysku, gdy grep niczego nie znajduje w pliku partitions
-  for (( P=1; P<=$(grep -c "${_DISK}[1-9]" /proc/partitions); P++)); do
-    wipefs -a -f -q ${_devDisk}${_PART_SYMBOL}${P} >> ${_logfile} 2>&1
+  grep "${_DISK}[0-9]\+" /proc/partitions | awk '{print $4}' | while read -r partition; do
+    wipefs -a -f -q "/dev/${partition}" >> ${_logfile} 2>&1
   done
-  set -E
 
   sgdisk -Z ${_devDisk} >> ${_logfile} 2>&1
   /sbin/partprobe ${_devDisk} >> ${_logfile} 2>&1

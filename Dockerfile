@@ -19,7 +19,8 @@ RUN apt-get update; apt-get install -y --no-install-recommends \
     zstd \
     coreutils \
     policykit-1 \
-    less
+    less \
+    dropbear-initramfs
 
 # Disk tools
 RUN apt-get install -y --no-install-recommends \  
@@ -45,3 +46,7 @@ RUN apt-get install -y unzip pv && \
 
 # Disk_info
 RUN cd /usr/local/sbin/; wget --no-check-certificate https://raw.githubusercontent.com/bockpl/ubuntu18.04src/master/bin/disk_info; chmod +x disk_info; cd /
+
+# Dropbear configuration
+ADD etc/dropbear-initramfs/config /etc/dropbear-initramfs/
+ADD etc/dropbear-initramfs/authorized_keys /etc/dropbear-initramfs/

@@ -734,8 +734,8 @@ ssh_config() {
 _config_rclone() {
   local _img_server=$1
   local _cfg_server=$2
-  sed -ie "s/\${img_server}/${_img_server}/g" ${BOCMDIR}/rclone.conf
-  sed -ie "s/\${cfg_server}/${_cfg_server}/g" ${BOCMDIR}/rclone.conf
+  sed -ie "s|\${img_server}|${_img_server}|g" ${BOCMDIR}/rclone.conf
+  sed -ie "s|\${cfg_server}|${_cfg_server}|g" ${BOCMDIR}/rclone.conf
 }
 
 override_initrd_scripts() {
@@ -746,7 +746,7 @@ override_initrd_scripts() {
   # Jezeli zmienna zdefiniowana
   if [[ "x${IMG_URI}" != 'x' ]]; then
     # Czy konfiguracja istnieje 
-    log_begin_msg "Download configuration initrd from CFG:${CFG_PATH}/${INITRD_CONF_PATH}"
+    log_begin_msg "Downloading configuration initrd from CFG:/${CFG_PATH}/${INITRD_CONF_PATH}"
       if /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate ls CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ > /dev/null; then
         echo -ne "\n"
         /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate copy --no-check-dest -L CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ / || panic "Configuration ${CFG_PATH} download error!"

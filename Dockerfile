@@ -50,3 +50,4 @@ RUN cd /usr/local/sbin/; wget --no-check-certificate https://raw.githubuserconte
 # Dropbear configuration
 ADD etc/dropbear-initramfs/config /etc/dropbear-initramfs/
 ADD etc/dropbear-initramfs/authorized_keys /etc/dropbear-initramfs/
+RUN chmod 600 /etc/dropbear-initramfs/authorized_keys

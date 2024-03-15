@@ -4,6 +4,9 @@
 # set BOOTIF 01-MAC_ADDRESS
 #set BOOTIF 01-3c-ec-ef-af-58-bc
 
+# Podlaczenie SSH do initramfs-a
+# ssh -p 2222 -oHostKeyAlgorithms=ssh-rsa -oPubkeyAcceptedKeyTypes=+ssh-rsa root@adres_serwera
+
 # Mozliwe parametry i ich znaczenie
 # img_uri - URL wskazujacy na obraz systemu, wraz z plikiem obrazu
 # cfg_uri - URL wskazujacy na katalog z konfiguracja systemu
@@ -13,22 +16,28 @@
 # break - parametr sluzacy do awaryjnego tymczasowego zatrzymania przetwarzania skryptow w danym momencie
 # Mozliwe wartosci parametru break, sluzace do diagnostyki
 #   before_net_config
-#   after_net_config - Uwaga od tego parametru mozna sie logowac przez SSH na port 2222 (ustawienia SSH HostKeyAlgorithms +ssh-rsa PubkeyAcceptedAlgorithms +ssh-rsa)
+#   after_net_config - Uwaga od tego parametru mozna sie logowac przez SSH na port 2222
 #   before_bocm_top
 #   before_user_bottom
 #   after_user_bottom
 #   end
 
+set INITRD initrd.test.img # Uwaga trzeba te ustawic pasujacy do ramdysku kernel
+set BASEURL https://boipxe/templates
+set TEMPLATE ubuntu22.04
+set TEMP_VER latest
+set BREAK after_user_bottom
+
 menu iPXE boot menu
 item --gap -- ---------------- Oparating systems ----------------
 item hdd        Boot from next devices
-item ubuntu2004   Ubuntu20.04:latest
-item ubuntu2004_mv      Ubuntu20.04:latest - make_volumes break=end
+item def_opt   ${TEMPLATE}-${TEMP_VER}
+item opt_mv      ${TEMPLATE}-${TEMP_VER} - make_volumes break=${BREAK}
 item disk_info  Disk info
 item --gap -- ---------------- Advanced configuration ----------------
 item shell      Drop to iPXE shell
 item exit       Exit to BIOS boot
-choose --default ubuntu2004 --timeout 10000 target && goto ${target} || reboot
+choose --default def_opt --timeout 10000 target && goto ${target} || reboot
 
 :hdd
 # Boot the first local HDD
@@ -40,34 +49,34 @@ exit
 set PARAMS disk_info
 goto image
 
-:ubuntu2004
+:def_opt
 set PARAMS
 goto image
 
-:ubuntu2004_mv
-set PARAMS break=end make_volumes
+:def_opt
+set PARAMS
+goto image
+
+:opt_mv
+set PARAMS break=${BREAK} make_volumes
 goto image
 
 :image
-set TEMPLATE ubuntu20.04
-set TEMP_VER 1.5.0
 set TEMP_COMP .tgz
 goto base
 
 :base
-set INITRD=initrd.img
-set BASEURL https://boipxe/templates
 set BOCMDIR ${BASEURL}/bocm-v1.0.0-dev
 set IMG_URI ${BASEURL}/${TEMPLATE}/${TEMPLATE}-${TEMP_VER}${TEMP_COMP}
 set CFG_URI ${BASEURL}/CONFIGS/${hostname}
 set KERNEL_PARAMS loglevel=3 initrd=${INITRD} net.ifnames=0 biosdevname=0 ipv6.disable=1 ip=dhcp rw -- img_uri=${IMG_URI} cfg_uri=${CFG_URI} ${PARAMS}
 # Jesli zdefiniowana zmienna BOOTIF
-#set KERNEL_PARAMS loglevel=3 initrd=initrd.img net.ifnames=0 biosdevname=0 ipv6.disable=1 ip=dhcp rw -- BOOTIF=${BOOTIF} img_uri=${IMG_URI} cfg_uri=${CFG_URI} ${PARAMS}
+#set KERNEL_PARAMS loglevel=3 initrd=${INITRD} net.ifnames=0 biosdevname=0 ipv6.disable=1 ip=dhcp rw -- BOOTIF=${BOOTIF} img_uri=${IMG_URI} cfg_uri=${CFG_URI} ${PARAMS}
 goto sysboot
 
 :sysboot
 echo 'Loading kernel ...'
-kernel ${BOCMDIR}/vmlinuz root=LABEL=lvroot ${KERNEL_PARAMS}
+kernel ${BOCMDIR}/vmlinuz-test root=LABEL=lvroot ${KERNEL_PARAMS}
 echo 'Loading initial ramdisk ...'
 initrd ${BOCMDIR}/${INITRD}
 boot

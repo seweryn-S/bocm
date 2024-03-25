@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 #Maintainer is deprecated 
 LABEL authors="seweryn.sitarski@p.lodz.pl"

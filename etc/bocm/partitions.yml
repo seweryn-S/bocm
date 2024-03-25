@@ -7,8 +7,9 @@ conf:
   #diskdev: /dev/disk/by-path/pci-0000:03:00.0-nvme-1
 
 # Typ partycji to numer kodowy zgodny z typami partycji wyswietlanymi przez polecenie sgdisk -L
-# Obsługiwane typy systemów plików: 
+# Obsługiwane typy systemow plikow: 
 #   ef00 - EFI System
+#   ef02 - BIOS GRUB - powinna byc pierwsza i miec 1MB
 #   8300 - Linux filesystem - domyslnie system plikow xfs
 #   8e00 - Linux LVM - brak bezposredniego systemu plikow
 

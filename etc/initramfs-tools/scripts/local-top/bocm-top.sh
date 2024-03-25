@@ -39,9 +39,24 @@ log_end_msg
 
 # Ustawienie zawsze serwera DNS na adres serwera dhcp, potrzebne z powodu SSL-a
 log_begin_msg "Overriding resolv.conf"
-  sleep 2
-  DHCP_SERVER="$(awk '/dhcp-server-identifier/ { print $3 }' /var/lib/dhcp/dhclient.leases | sed -e 's/;//')"
-  echo "nameserver ${DHCP_SERVER}" > /etc/resolv.conf
+  echo ""
+  # Ustaw maksymalną liczbę prób odczytu pliku lease
+  MAX_ATTEMPTS=30
+  ATTEMPT=1
+
+  # Poczekaj, aż plik lease będzie zawierał 'dhcp-server-identifier'
+  DHCP_SERVER=""
+  while [ -z "${DHCP_SERVER}" ] && [ "${ATTEMPT}" -le "${MAX_ATTEMPTS}" ]; do
+    echo "Step: ${ATTEMPT}/${MAX_ATTEMPTS}: Waiting for DHCP..."
+    DHCP_SERVER="$(awk '/dhcp-server-identifier/ { print $3 }' /var/lib/dhcp/dhclient.leases | sed -e 's/;//')"
+    ATTEMPT=$((ATTEMPT+1))
+    sleep 1
+  done
+  if [ -z "${DHCP_SERVER}" ]; then
+    panic "Failed to obtain DHCP server address after ${MAX_ATTEMPTS} attempts."
+  else
+    echo "nameserver ${DHCP_SERVER}" > /etc/resolv.conf
+  fi
 log_end_msg
 
 maybe_break after_net_config

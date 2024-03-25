@@ -31,14 +31,23 @@ udevadm settle
 maybe_break before_net_config
 
 log_begin_msg "Configuring networking"
+# Nadpisanie oryginalnej konfiguracji DHCP wlasna bez pobierania adresow DNS
+mv /etc/custom-dhclient.conf /etc/dhcp/dhclient.conf
+
 configure_networking
-# Now we have in /tmp/net-eth0.conf:
-# DEVICE=eth0; IPV4ADDR=192.168.0.2; IPV4BROADCAST=192.168.0.255;IPV4NETMASK=255.255.255.0;IPV4GATEWAY=192.168.0.1;IPV4DNS0;IPV4DNS1;HOSTNAME=n02.rostclust;DNSDOMAIN;NISDOMAIN(unset);filename="/cluster_node/pxelinux.0"
+log_end_msg
+
+# Ustawienie zawsze serwera DNS na adres serwera dhcp, potrzebne z powodu SSL-a
+log_begin_msg "Overriding resolv.conf"
+  sleep 2
+  DHCP_SERVER="$(awk '/dhcp-server-identifier/ { print $3 }' /var/lib/dhcp/dhclient.leases | sed -e 's/;//')"
+  echo "nameserver ${DHCP_SERVER}" > /etc/resolv.conf
 log_end_msg
 
 maybe_break after_net_config
 
 bin/bash -c ". /scripts/functions; . ./${BOCMDIR}/functions.sh; ssh_config;"
+
 # Nadpisywanie plikow initramfs-u z katalogu konfiguracyjnego
 bin/bash -c ". /scripts/functions; . ./${BOCMDIR}/functions.sh; override_initrd_scripts;"
 # Tu korzystamy z juz nadpisanych skryptow i funkcji

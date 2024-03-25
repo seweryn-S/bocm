@@ -62,9 +62,9 @@ copy_exec /bin/tar /bin
 copy_exec /usr/bin/zstd /bin
 #copy_exec /usr/bin/wget /usr/bin/wget
 copy_exec /bin/bash /bin/bash
-#copy_exec /usr/bin/ssh /usr/bin/ssh
 copy_exec /usr/bin/pv /bin/pv
 copy_exec /rclone/rclone /bin/rclone
+copy_exec /usr/bin/ping /bin/ping
 
 copy_file RCLONE_CONF /etc/bocm/rclone.conf 
 

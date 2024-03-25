@@ -20,7 +20,8 @@ RUN apt-get update; apt-get install -y --no-install-recommends \
     coreutils \
     policykit-1 \
     less \
-    dropbear-initramfs
+    dropbear-initramfs \
+    iputils-ping
 
 # Disk tools
 RUN apt-get install -y --no-install-recommends \  

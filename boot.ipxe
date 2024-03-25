@@ -22,8 +22,6 @@
 #   after_user_bottom
 #   end
 
-set INITRD initrd.test.img # Uwaga trzeba te ustawic pasujacy do ramdysku kernel
-set BASEURL https://boipxe/templates
 set TEMPLATE ubuntu22.04
 set TEMP_VER latest
 set BREAK after_user_bottom
@@ -53,10 +51,6 @@ goto image
 set PARAMS
 goto image
 
-:def_opt
-set PARAMS
-goto image
-
 :opt_mv
 set PARAMS break=${BREAK} make_volumes
 goto image
@@ -66,6 +60,8 @@ set TEMP_COMP .tgz
 goto base
 
 :base
+set INITRD initrd.test.img # Uwaga trzeba te ustawic pasujacy do ramdysku kernel
+set BASEURL https://boipxe/templates
 set BOCMDIR ${BASEURL}/bocm-v1.0.0-dev
 set IMG_URI ${BASEURL}/${TEMPLATE}/${TEMPLATE}-${TEMP_VER}${TEMP_COMP}
 set CFG_URI ${BASEURL}/CONFIGS/${hostname}

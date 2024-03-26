@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 #Maintainer is deprecated 
 LABEL authors="seweryn.sitarski@p.lodz.pl"
@@ -49,6 +49,6 @@ RUN apt-get install -y unzip pv && \
 RUN cd /usr/local/sbin/; wget --no-check-certificate https://raw.githubusercontent.com/bockpl/ubuntu18.04src/master/bin/disk_info; chmod +x disk_info; cd /
 
 # Dropbear configuration
-ADD etc/dropbear-initramfs/config /etc/dropbear-initramfs/
-ADD etc/dropbear-initramfs/authorized_keys /etc/dropbear-initramfs/
-RUN chmod 600 /etc/dropbear-initramfs/authorized_keys
+ADD etc/dropbear-initramfs/config /etc/dropbear/initramfs/dropbear.conf
+ADD etc/dropbear-initramfs/authorized_keys /etc/dropbear/initramfs/
+RUN chmod 600 /etc/dropbear/initramfs/authorized_keys

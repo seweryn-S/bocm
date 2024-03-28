@@ -31,14 +31,11 @@ udevadm settle
 maybe_break before_net_config
 
 log_begin_msg "Configuring networking"
-# Nadpisanie oryginalnej konfiguracji DHCP wlasna bez pobierania adresow DNS
-mv /etc/custom-dhclient.conf /etc/dhcp/dhclient.conf
-
 configure_networking
 log_end_msg
 
-# Ustawienie zawsze serwera DNS na adres serwera dhcp, potrzebne z powodu SSL-a
-log_begin_msg "Overriding resolv.conf"
+# Wpis w /etc/hosts dla adresu boipxe, potrzebne z powodu SSL-a
+log_begin_msg "Setting boipxe address"
   echo ""
   # Ustaw maksymalną liczbę prób odczytu pliku lease
   MAX_ATTEMPTS=30
@@ -55,7 +52,7 @@ log_begin_msg "Overriding resolv.conf"
   if [ -z "${DHCP_SERVER}" ]; then
     panic "Failed to obtain DHCP server address after ${MAX_ATTEMPTS} attempts."
   else
-    echo "nameserver ${DHCP_SERVER}" > /etc/resolv.conf
+    echo "${DHCP_SERVER} boipxe" > /etc/hosts
   fi
 log_end_msg
 

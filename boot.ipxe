@@ -56,13 +56,13 @@ set PARAMS break=${BREAK} make_volumes
 goto image
 
 :image
-set TEMP_COMP .tgz
+set TEMP_COMP .tstd
 goto base
 
 :base
-set INITRD initrd.test.img # Uwaga trzeba te ustawic pasujacy do ramdysku kernel
+set INITRD initrd.img # Uwaga trzeba te ustawic pasujacy do ramdysku kernel
 set BASEURL https://boipxe/templates
-set BOCMDIR ${BASEURL}/bocm-v1.0.0-dev
+set BOCMDIR ${BASEURL}/bocm-v1.0.0
 set IMG_URI ${BASEURL}/${TEMPLATE}/${TEMPLATE}-${TEMP_VER}${TEMP_COMP}
 set CFG_URI ${BASEURL}/CONFIGS/${hostname}
 set KERNEL_PARAMS loglevel=3 initrd=${INITRD} net.ifnames=0 biosdevname=0 ipv6.disable=1 ip=dhcp rw -- img_uri=${IMG_URI} cfg_uri=${CFG_URI} ${PARAMS}
@@ -72,7 +72,7 @@ goto sysboot
 
 :sysboot
 echo 'Loading kernel ...'
-kernel ${BOCMDIR}/vmlinuz-test root=LABEL=lvroot ${KERNEL_PARAMS}
+kernel ${BOCMDIR}/vmlinuz root=LABEL=lvroot ${KERNEL_PARAMS}
 echo 'Loading initial ramdisk ...'
 initrd ${BOCMDIR}/${INITRD}
 boot

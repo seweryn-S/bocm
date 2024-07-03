@@ -1,0 +1,13 @@
+#!/bin/bash
+# Przykladowy plik pre_boot dla systemow Oracle Linux 8
+
+grub-mkconfig &> /dev/null && \
+efibootmgr -c -d /dev/sda -p 1 -L "Oracle Linux" -l \EFI\redhat\shimx64.efi
+
+for file in /boot/initramfs-*; do
+    filename=$(basename $file)
+    if [[ $filename != "dump" ]]; then
+        kernel_number=$(echo $filename | sed 's/initramfs-//' | sed 's/.img//')
+        dracut -f $file $kernel_number &> /dev/null
+    fi
+done

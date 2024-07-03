@@ -7,7 +7,7 @@ conf:
   #diskdev: /dev/disk/by-path/pci-0000:03:00.0-nvme-1
 
 # Typ partycji to numer kodowy zgodny z typami partycji wyswietlanymi przez polecenie sgdisk -L
-# Obsługiwane typy systemow plikow: 
+# Obsługiwane typy systemow plikow:
 #   ef00 - EFI System
 #   ef02 - BIOS GRUB - powinna byc pierwsza i miec 1MB
 #   8300 - Linux filesystem - domyslnie system plikow xfs
@@ -19,29 +19,27 @@ conf:
 # Partycje są montowane w kolejności występowania w pliku, nie w kolejności numeracji
 # Mozna wpisać do pliku w kolejności nie rosnącej numeracji, czyli np partycja 2 moze być przed 1
 #
-# Przyklad: Jeśli pratycja 1 to /boot/EFI a partycja 2 to /boot 
+# Przyklad: Jeśli pratycja 1 to /boot/EFI a partycja 2 to /boot
 #          partycja 2 musi występować w pliku przez partycją 1
 ####################################################################################################
 partition:
-  -
-  # Numer partycji
+  - # Numer partycji
     number: 1
-  # Nazwa partycji
+    # Nazwa partycji
     name: EFI
-  # Typ partycji
+    # Typ partycji
     type: ef00
-  # Tym systemu plikow jakim ma byc sformatowana
+    # Tym systemu plikow jakim ma byc sformatowana
     fstype: vfat
-  # Miejsce montowania, jezeli puste partycja 
-  # nie bedzie automatycznie montowana przed zgraniem obrazu i
-  # nie bedzie wpisana do pliku fstab
+    # Miejsce montowania, jezeli puste partycja
+    # nie bedzie automatycznie montowana przed zgraniem obrazu i
+    # nie bedzie wpisana do pliku fstab
     mnt: /boot/efi
-  # Opcje monotowania
+    # Opcje monotowania
     mntopt: "noexec,uid=0,gid=4,dmask=0023,fmask=0133"
-  # Rozmiar: M,G,T
+    # Rozmiar: M,G,T
     size: 200M
-  -
-    number: 2
+  - number: 2
     name: ROOT
     type: 8e00
     fstype: ""
@@ -50,8 +48,7 @@ partition:
     size: 0
 
 volume:
-  -
-    part: 2
+  - part: 2
     name: lvswap
     dev: mapper/vgroot-lvswap
     fstype: swap
@@ -59,10 +56,9 @@ volume:
     mnt: ""
     mntopt: ""
     raid: raid1
-  # Wolumey typu SYS zawsze sa kasowane i nadpisywane
+    # Wolumey typu SYS zawsze sa kasowane i nadpisywane
     type: SYS
-  -
-    part: 2
+  - part: 2
     name: lvroot
     dev: mapper/vgroot-lvroot
     fstype: xfs
@@ -71,8 +67,7 @@ volume:
     mntopt: ""
     raid: raid1
     type: SYS
-  - 
-    part: 2
+  - part: 2
     name: lvvar
     dev: mapper/vgroot-lvvar
     fstype: xfs
@@ -81,18 +76,17 @@ volume:
     mntopt: ""
     raid: raid1
     type: SYS
-    - 
-    part: 2
+  - part: 2
     name: lvmfs
-  # Nazwa urzadzenia lvm bez /dev
-  # jesli wielkosc ostatniego wolumenu jest 0 
-  # do nazwy zostanie automatycznie dodany numer kanalu SCSI
+    # Nazwa urzadzenia lvm bez /dev
+    # jesli wielkosc ostatniego wolumenu jest 0
+    # do nazwy zostanie automatycznie dodany numer kanalu SCSI
     dev: mapper/vgroot-lvmfs
     fstype: xfs
     size: 0
     mnt: ""
     mntopt: ""
     raid: n
-  # Wolumenty typu USR nie sa kasowane i nadpisywane 
-  # chyba ze zostanie dodana opcja make_volumes do kernela
+    # Wolumenty typu USR nie sa kasowane i nadpisywane
+    # chyba ze zostanie dodana opcja make_volumes do kernela
     type: USR

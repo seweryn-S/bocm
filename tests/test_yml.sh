@@ -26,7 +26,14 @@ for (( i=0; i<${#partition__number[@]}; i++ )); do
   echo part: ${partition__number[i]}
   for (( v=0; v<${#volume__part[@]}; v++ )); do
     if [[ ${volume__part[$v]} = ${partition__number[i]} ]]; then
-      echo part_vol_name: ${volume__name[$v]}
+      echo "part_vol_name: ${volume__name[$v]}"
+      echo "  part_vol_dev: ${volume__dev[$v]}"
+      echo "  part_vol_fstype: ${volume__fstype[$v]}"
+      echo "  part_vol_size: ${volume__size[$v]}"
+      echo "  part_vol_mnt: ${volume__mnt[$v]}"
+      echo "  part_vol_mntopt: ${volume__mntopt[$v]}"
+      echo "  part_vol_raid: ${volume__raid[$v]}"
+      echo "  part_vol_type: ${volume__type[$v]}"
     fi
   done
 done

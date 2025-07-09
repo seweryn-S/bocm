@@ -468,6 +468,7 @@ makeVolumes() {
           if [ ${volume__size[$v]} == "0" ]; then
             # Jezeli to ostatni wolumen
             if [ "$v" = "$((${#volume__part[@]}-1))" ]; then
+              # Rozmiar ostatniego wolumenu musi zostawic troche miejsca na wolumeny techniczne w razie checi uzycia raid
               volume__size[$v]="99%PVS"
               # Doprecyzowanie nazwy ostatniego wolumenu
               _lvname="${_lvname}$(_getDiskID ${_devDisk})"

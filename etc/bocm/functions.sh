@@ -491,7 +491,7 @@ makeVolumes() {
           fi
         fi
 
-        case "${volume__raid[$v]}" in 
+        case "${volume__raid[$v],,}" in 
           "raid1")
             # Jezeli istnieje juz LV o podanej nazwie i nie znajduje sie na przetwarzanym PV
             #local nlv=$(lvm lvs --noheadings -o lv_name -S vg_name=${_vgname},lv_name=${_lvname}|awk '{ print $1 }')
@@ -532,7 +532,7 @@ makeVolumes() {
             fi
           ;;#raid=raid1
 
-          "n")
+          "n" | "no" | "f" | "false")
             # Jezeli wolumen o podanej nazwie juz istnieje, nic nie rob
             local lv
             lv=$(lvm lvs --noheadings -o lv_name -S vg_name=${_vgname},lv_name=${_lvname}|awk '{ print $1 }')
@@ -552,7 +552,7 @@ makeVolumes() {
             fi
             _makeFS="true"
             printf "done\n"
-          ;; #raid=n
+          ;; #raid=ncza wraliwość na wielkość liter w parametrach raid pliku partitions 
           *)
             printf "Error: Bad value for \"raid\" field for volume %s" "${volume__dev[$v]}"
             if [ ${_return} != 0 ]; then

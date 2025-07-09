@@ -530,8 +530,7 @@ makeVolumes() {
               _makeFS="true"
               printf "done\n"
             fi
-          ;;#raid=raid1
-
+          ;; #raid=raid1
           "n" | "no" | "f" | "false")
             # Jezeli wolumen o podanej nazwie juz istnieje, nic nie rob
             local lv
@@ -552,7 +551,7 @@ makeVolumes() {
             fi
             _makeFS="true"
             printf "done\n"
-          ;; #raid=ncza wraliwość na wielkość liter w parametrach raid pliku partitions 
+          ;; #raid=n 
           *)
             printf "Error: Bad value for \"raid\" field for volume %s" "${volume__dev[$v]}"
             if [ ${_return} != 0 ]; then

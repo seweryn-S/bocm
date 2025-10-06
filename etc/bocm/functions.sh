@@ -893,7 +893,12 @@ bocm_bottom() {
       mount -o bind /${D} ${rootmnt}/${D}
     done
 
-    change_kernelparams ${rootmnt}/etc/default/grub
+    # Wyłczone poniewaz pochodzi ze starej wersji, gdy system docelowy nie byl restartowany.
+    # Obecnie nie zmieniamy domyslnych parametrów zawartych w obrazie.
+    # Administrator zawsze moe nadpisać plik /etc/default/grub w konfiguracji sieciowej dla maszyny
+    #change_kernelparams ${rootmnt}/etc/default/grub
+
+
     # chroot ${rootmnt} /bin/bash -c " \
     #     sed -i -e 's/use_lvmetad = 1/use_lvmetad = 0/g' /etc/lvm/lvm.conf \
     #     && update-grub &> /dev/null \

@@ -17,7 +17,7 @@ esac
 . /scripts/functions
 
 # NFS network configuration
-OLD_DIR=${pwd}
+OLD_DIR=$(pwd)
 cd /root/etc/network
 /bin/ln -sf interfaces.nfs interfaces
 cd $OLD_DIR

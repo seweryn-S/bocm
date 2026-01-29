@@ -1,5 +1,15 @@
 #!ipxe
 
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Seweryn Sitarski
+# Author: Seweryn Sitarski
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3,
+# as published by the Free Software Foundation.
+# See the LICENSE file for details.
+
+
 # Jesli w systemie wystepuje wiele kart sieciowych nalezy wskazac ta z ktorej ma startowac system
 # set BOOTIF 01-MAC_ADDRESS
 #set BOOTIF 01-3c-ec-ef-af-58-bc

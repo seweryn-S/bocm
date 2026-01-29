@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Seweryn Sitarski
+# Author: Seweryn Sitarski
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3,
+# as published by the Free Software Foundation.
+# See the LICENSE file for details.
+
+
 if [ "$#" == 0 ]; then
   printf "Poprawne wywołanie: $0 sciezka_katalogu_w_ktorym_ma_byc zapisany initrd.img i vmlinuz\n"
   exit ${PARAMERROR}

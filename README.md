@@ -1,3 +1,13 @@
+<!--
+SPDX-License-Identifier: GPL-3.0-only
+Copyright (C) 2026 Seweryn Sitarski
+Author: Seweryn Sitarski
+
+This file is part of this project and is licensed
+under the GNU General Public License version 3.
+See the LICENSE file for details.
+-->
+
 # bocm
 BlueOcean control manager.
 

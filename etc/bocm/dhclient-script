@@ -1,4 +1,14 @@
 #!/bin/sh
+
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Seweryn Sitarski
+# Author: Seweryn Sitarski
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3,
+# as published by the Free Software Foundation.
+# See the LICENSE file for details.
+
 #old_subnet_mask=255.255.248.0
 #old_domain_name_servers=10.76.232.101 10.76.232.102
 #old_broadcast_address=10.76.239.255

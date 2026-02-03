@@ -871,9 +871,9 @@ bocm_bottom() {
     cd ${rootmnt} || panic "Error! I can't change directory to ${rootmnt}"
     _ext=${IMG_PATH##*.}
     if [ "x${_ext}" == "xtgz" ]; then
-        /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | tar -xzf -
+        /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | gnutar -xzf -
         elif [ "x${_ext}" == "xtzst" ]; then
-        /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | tar -I 'zstd -d --threads=4' -xf -
+        /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | gnutar -I 'zstd -d --threads=4' -xf -
     else
         panic "Error! I can't recognize file extension of system image ${IMG_PATH}"
     fi
@@ -935,6 +935,9 @@ bocm_bottom() {
         mv ${rootmnt}/etc/fstab.org ${rootmnt}/etc/fstab
     fi
     
+    # Zachowanie pliku logow w systemie docelowym
+    mv ${_logfile} ${rootmnt}/var/log/bocm_install.log
+
     for D in ${DIRS}; do
         umount ${rootmnt}/${D}
     done

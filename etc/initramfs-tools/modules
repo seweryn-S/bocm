@@ -14,3 +14,10 @@ nfsv3
 8021q
 vmxnet3
 be2net
+# Na potrzeby partycji EFI, strona kodowa konieczna do montowania partycji vfat
+nls_cp437
+nls_ascii
+fat
+vfat
+# konieczne w Debian
+efivarfs

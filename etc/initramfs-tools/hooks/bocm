@@ -68,7 +68,8 @@ do
         fi
 done
 
-copy_exec /bin/tar /bin
+# Musi byc pod inna nazwa bo w Debian oryginalna nadpisuje busybox
+copy_exec /usr/bin/tar /sbin/gnutar
 copy_exec /usr/bin/zstd /bin
 #copy_exec /usr/bin/wget /usr/bin/wget
 copy_exec /bin/bash /bin/bash

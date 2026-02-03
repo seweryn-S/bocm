@@ -7,13 +7,13 @@
 # as published by the Free Software Foundation.
 # See the LICENSE file for details.
 
-FROM ubuntu:22.04
+FROM debian:trixie
 
 #Maintainer is deprecated 
 LABEL authors="seweryn.sitarski@p.lodz.pl"
 
 # W celu eliminacji bledu "debconf: unable to initialize frontend: Dialog"
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Aktualizacja podstawowego obrazu oraz czyszczenie
 #RUN set -xe \
@@ -27,7 +27,7 @@ RUN apt-get update; apt-get install -y --no-install-recommends \
     vim \
     zstd \
     coreutils \
-    policykit-1 \
+    #policykit-1 \
     less \
     dropbear-initramfs \
     iputils-ping

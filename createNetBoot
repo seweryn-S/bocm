@@ -29,12 +29,12 @@ echo ${VER} > etc/bocm/VERSION
 
 docker build -t ${IMAGE_NAME} ./ && \
 CONTAINER=$(docker run -d --rm ${RUNOPT} ${IMAGE_NAME} /bin/sleep 1000) && \
-KERNELV=$(docker exec ${CONTAINER} ls -l /boot/vmlinuz|awk '{ print $11 }') && \
-KERNELV=${KERNELV#vmlinuz-} && \
-#docker exec -it ${CONTAINER} /bin/bash
-docker exec ${CONTAINER} update-initramfs -c -k ${KERNELV} && \
-KERNEL=$(docker exec ${CONTAINER} readlink -f /boot/vmlinuz) && \
-INITRD=$(docker exec ${CONTAINER} readlink -f /boot/initrd.img) && \
+#KERNELV=$(docker exec ${CONTAINER} ls -l /boot/vmlinuz|awk '{ print $11 }') && \
+#KERNELV=${KERNELV#vmlinuz-} && \
+KERNELV=$(docker exec ${CONTAINER} bash -lc 'basename "$(readlink -f /vmlinuz)" | sed "s/^vmlinuz-//"') && \
+docker exec ${CONTAINER} update-initramfs -c -k ${KERNELV} && \ 
+KERNEL=$(docker exec ${CONTAINER} readlink -f /vmlinuz) && \
+INITRD=$(docker exec ${CONTAINER} readlink -f /initrd.img) && \
 docker cp ${CONTAINER}:${KERNEL} ${OUTDIR}/vmlinuz-${KERNELV} && \
 ln -sf ./vmlinuz-${KERNELV} ${OUTDIR}/vmlinuz && \
 chmod go+r ${OUTDIR}/vmlinuz* && \

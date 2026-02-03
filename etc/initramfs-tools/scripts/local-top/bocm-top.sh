@@ -51,19 +51,20 @@ log_begin_msg "Setting boipxe address"
   MAX_ATTEMPTS=30
   ATTEMPT=1
 
-  # Poczekaj, aż plik lease będzie zawierał 'dhcp-server-identifier'
+  # Poczekaj, na zakończenie konfiguracji DHCP
   DHCP_SERVER=""
   while [ -z "${DHCP_SERVER}" ] && [ "${ATTEMPT}" -le "${MAX_ATTEMPTS}" ]; do
     echo "Step: ${ATTEMPT}/${MAX_ATTEMPTS}: Waiting for DHCP..."
-    DHCP_SERVER="$(awk '/dhcp-server-identifier/ { print $3 }' /var/lib/dhcp/dhclient.leases | sed -e 's/;//')"
+    DHCP_SERVER=$(grep ROOTSERVER /run/net-eth0.conf | cut -d '=' -f 2 | tr -d "'")
     ATTEMPT=$((ATTEMPT+1))
     sleep 1
   done
   if [ -z "${DHCP_SERVER}" ]; then
     panic "Failed to obtain DHCP server address after ${MAX_ATTEMPTS} attempts."
-  else
-    echo "${DHCP_SERVER} boipxe" > /etc/hosts
   fi
+  # Konieczne opoznienie ze wzgledu na opoznione tworzenie pliku hosts, bez opoznienia zostanie nadpisany
+  sleep 2
+  echo "${DHCP_SERVER}  boipxe" >> /etc/hosts
 log_end_msg
 
 maybe_break after_net_config

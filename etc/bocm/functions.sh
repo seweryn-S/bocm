@@ -755,6 +755,16 @@ override_initrd_scripts() {
     
     # Jezeli zmienna zdefiniowana
     if [[ "x${IMG_URI}" != 'x' ]]; then
+        # Pobieranie partitions.yml z przestrzeni zdalnej, jezeli istnieje
+        log_begin_msg "Downloading partitions.yml from CFG:/${CFG_PATH}/partitions.yml"
+        if /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate ls CFG:${CFG_PATH}/partitions.yml > /dev/null 2>&1; then
+            /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate copyto --no-check-dest -L CFG:${CFG_PATH}/partitions.yml ${BOCMDIR}/partitions.yml
+            log_warning_msg "partitions.yml downloaded successfully"
+        else
+            log_warning_msg "partitions.yml not found on CFG server, using built-in version"
+        fi
+        log_end_msg
+
         # Czy konfiguracja istnieje
         log_begin_msg "Downloading configuration initrd from CFG:/${CFG_PATH}/${INITRD_CONF_PATH}"
         if /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate ls CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ > /dev/null; then

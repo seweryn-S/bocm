@@ -78,6 +78,7 @@ UWAGA: `make_volumes` jest operacją destrukcyjną — skasuje dane na dysku doc
   - `partition[]` — numer, typ (np. `ef00`, `8e00`), `fstype`, `mnt`, `size`.
   - `volume[]` — `part`, `name`, `dev` (np. `mapper/vgroot-lvroot`), `fstype` (`xfs`/`swap`/`vfat`), `size`, `mnt`, `mntopt`, `raid` (`raid1` lub `n`), `type` (`SYS` nadpisywane zawsze, `USR` tylko z `make_volumes`).
   - Partycje i punkty montowania przetwarzane są w kolejności z pliku (nie po numerach). Gdy `/boot` i `/boot/efi` istnieją, upewnij się, że `/boot` występuje wcześniej niż `/boot/efi`.
+  - Plik ten może być również umieszczony w katalogu konfiguracyjnym hosta na serwerze CFG i zostanie pobrany podczas bootowania (jeśli istnieje), zastępując wersję wbudowaną w initramfs.
 - `etc/bocm/default` — m.in.: `VOLUMES_FILE`, `PRE_BOOT_FILE` (domyślnie `/etc/pre_boot`), `MANUAL_DISK_MANAGE`, `INITRD_CONF_PATH`.
 - `etc/bocm/rclone.conf` — zdalne „remotes” `IMG` i `CFG` (typ `http`). Adresy są podmieniane w locie na podstawie `img_uri` i `cfg_uri`.
 - `etc/initramfs-tools/conf.d/bocm` — parsowanie `img_uri`/`cfg_uri` i flag sterujących.
@@ -86,8 +87,9 @@ UWAGA: `make_volumes` jest operacją destrukcyjną — skasuje dane na dysku doc
 **Przebieg Działania (w skrócie)**
 - Faza TOP (`bocm_top` w initramfs):
   - Konfiguracja sieci, weryfikacja dostępności obrazu (`IMG:`). Opcjonalnie `disk_info`.
+  - Pobieranie pliku `partitions.yml` z katalogu CFG (jeśli istnieje), zastępując wersję wbudowaną.
   - Detekcja dysku (`conf.diskdev` lub by‑path). Opcjonalne: `cleanDisk` + `makeStdPartition` gdy `make_volumes`.
-  - `makeVolumes` według YAML, następnie `vgchange -ay`.
+  - `makeVolumes` według YAML (lub pobranego `partitions.yml`), następnie `vgchange -ay`.
 - Faza BOTTOM (`bocm_bottom`):
   - Montowanie wszystkich partycji/LV na `rootmnt` (`mountAll`).
   - Pobranie i rozpakowanie obrazu do `rootmnt` (tgz/tzst przez rclone).

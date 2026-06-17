@@ -25,6 +25,7 @@ Environment overrides:
 - CONTAINER_CLI   Container runtime command to use (default: docker)
 - IMAGE_NAME      Image name to build (default: bocm)
 - BUILD_NETWORK   Network mode passed to build (default: host)
+- RUN_NETWORK     Network mode passed to run (default: BUILD_NETWORK)
 EOF
 }
 
@@ -49,6 +50,7 @@ OUTDIR=$1
 CONTAINER_CLI=${CONTAINER_CLI:-docker}
 IMAGE_NAME=${IMAGE_NAME:-bocm}
 BUILD_NETWORK=${BUILD_NETWORK:-host}
+RUN_NETWORK=${RUN_NETWORK:-$BUILD_NETWORK}
 CONTAINER=""
 DIR=$(pwd)
 
@@ -75,7 +77,7 @@ echo "${VER}" > "${DIR}/etc/bocm/VERSION"
 mkdir -p "${OUTDIR}"
 
 "${CONTAINER_CLI}" build --network="${BUILD_NETWORK}" -t "${IMAGE_NAME}" ./
-CONTAINER=$("${CONTAINER_CLI}" run -d --rm "${RUNOPT[@]}" "${IMAGE_NAME}" /bin/sleep 1000)
+CONTAINER=$("${CONTAINER_CLI}" run --network="${RUN_NETWORK}" -d --rm "${RUNOPT[@]}" "${IMAGE_NAME}" /bin/sleep 1000)
 KERNELV=$("${CONTAINER_CLI}" exec "${CONTAINER}" bash -lc 'basename "$(readlink -f /vmlinuz)" | sed "s/^vmlinuz-//"')
 "${CONTAINER_CLI}" exec "${CONTAINER}" update-initramfs -c -k "${KERNELV}"
 KERNEL=$("${CONTAINER_CLI}" exec "${CONTAINER}" readlink -f /vmlinuz)

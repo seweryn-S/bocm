@@ -748,6 +748,10 @@ _config_rclone() {
     sed -ie "s|\${cfg_server}|${_cfg_server}|g" ${BOCMDIR}/rclone.conf
 }
 
+_rclone() {
+    /bin/rclone --config "${BOCMDIR}/rclone.conf" --no-check-certificate "$@"
+}
+
 override_initrd_scripts() {
     log_warning_msg "Correcting server address in rclone.conf"
     
@@ -757,8 +761,8 @@ override_initrd_scripts() {
     if [[ "x${IMG_URI}" != 'x' ]]; then
         # Pobieranie partitions.yml z przestrzeni zdalnej, jezeli istnieje
         log_begin_msg "Downloading partitions.yml from CFG:/${CFG_PATH}/partitions.yml"
-        if /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate ls CFG:${CFG_PATH}/partitions.yml > /dev/null 2>&1; then
-            /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate copyto --no-check-dest -L CFG:${CFG_PATH}/partitions.yml ${BOCMDIR}/partitions.yml
+        if _rclone ls CFG:${CFG_PATH}/partitions.yml > /dev/null 2>&1; then
+            _rclone copyto --no-check-dest -L CFG:${CFG_PATH}/partitions.yml ${BOCMDIR}/partitions.yml
             log_warning_msg "partitions.yml downloaded successfully"
         else
             log_warning_msg "partitions.yml not found on CFG server, using built-in version"
@@ -767,9 +771,9 @@ override_initrd_scripts() {
 
         # Czy konfiguracja istnieje
         log_begin_msg "Downloading configuration initrd from CFG:/${CFG_PATH}/${INITRD_CONF_PATH}"
-        if /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate ls CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ > /dev/null; then
+        if _rclone ls CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ > /dev/null; then
             echo -ne "\n"
-            /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate copy --no-check-dest -L CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ / || panic "Configuration ${CFG_PATH} download error!"
+            _rclone copy --no-check-dest -L CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ / || panic "Configuration ${CFG_PATH} download error!"
         else
             log_warning_msg "Download configuration error!"
         fi
@@ -795,7 +799,7 @@ bocm_top() {
         return 1
     else
         # Sprawdz czy obraz systemu jest dostepny ijego rozmiar jest rozny od zera
-        IMG_SIZE=$(/bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate ls IMG:${IMG_PATH} 2> /dev/null | awk '{print $1}')
+        IMG_SIZE=$(_rclone ls IMG:${IMG_PATH} 2> /dev/null | awk '{print $1}')
         if [ "x${IMG_SIZE}" = "x" ]; then
             panic "The size of the system image is 0, or the image is unavailable!"
         fi
@@ -881,9 +885,9 @@ bocm_bottom() {
     cd ${rootmnt} || panic "Error! I can't change directory to ${rootmnt}"
     _ext=${IMG_PATH##*.}
     if [ "x${_ext}" == "xtgz" ]; then
-        /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | gnutar -xzf -
+        _rclone cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | gnutar -xzf -
         elif [ "x${_ext}" == "xtzst" ]; then
-        /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | gnutar -I 'zstd -d --threads=4' -xf -
+        _rclone cat IMG:${IMG_PATH} | pv -s ${IMG_SIZE} | gnutar -I 'zstd -d --threads=4' -xf -
     else
         panic "Error! I can't recognize file extension of system image ${IMG_PATH}"
     fi
@@ -896,7 +900,7 @@ bocm_bottom() {
     
     log_begin_msg "Download configuration from CFG:${CFG_PATH}/"
     printf "\n"
-    /bin/rclone --config ${BOCMDIR}/rclone.conf --no-check-certificate copy --create-empty-src-dirs --no-check-dest -L --exclude=boot.ipxe --exclude=.git/** --exclude=initrd.conf/** CFG:${CFG_PATH}/ ${rootmnt}/
+    _rclone copy --create-empty-src-dirs --no-check-dest -L --exclude=boot.ipxe --exclude=.git/** --exclude=initrd.conf/** CFG:${CFG_PATH}/ ${rootmnt}/
     log_end_msg
     
     log_begin_msg "Installing bootloader, rebuild initramfs"

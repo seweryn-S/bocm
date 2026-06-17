@@ -900,7 +900,7 @@ bocm_bottom() {
     
     log_begin_msg "Download configuration from CFG:${CFG_PATH}/"
     printf "\n"
-    _rclone copy --create-empty-src-dirs --no-check-dest -L --exclude=boot.ipxe --exclude=.git/** --exclude=initrd.conf/** CFG:${CFG_PATH}/ ${rootmnt}/
+    _rclone copy --create-empty-src-dirs --no-check-dest -L --exclude=boot.ipxe --exclude=.git/** --exclude=initrd.conf/** --exclude=partitions.yml CFG:${CFG_PATH}/ ${rootmnt}/
     log_end_msg
     
     log_begin_msg "Installing bootloader, rebuild initramfs"

@@ -769,13 +769,13 @@ override_initrd_scripts() {
         fi
         log_end_msg
 
-        # Czy konfiguracja istnieje
+        # Opcjonalna konfiguracja initramfs-u z katalogu hosta.
         log_begin_msg "Downloading configuration initrd from CFG:/${CFG_PATH}/${INITRD_CONF_PATH}"
-        if _rclone ls CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ > /dev/null; then
+        if _rclone ls CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ > /dev/null 2>&1; then
             echo -ne "\n"
             _rclone copy --no-check-dest -L CFG:${CFG_PATH}/${INITRD_CONF_PATH}/ / || panic "Configuration ${CFG_PATH} download error!"
         else
-            log_warning_msg "Download configuration error!"
+            log_warning_msg "initrd.conf not found on CFG server, using built-in initrd configuration"
         fi
         log_end_msg
     fi
